@@ -1,27 +1,29 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
-
 const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // First check if there's a default config in the database
-    const config = await prisma.chatbot.findFirst({
-      where: { isDefault: true }
-    });
-    
-    // If found, return it
+    // Fetch the default chatbot configuration
+    const config = await prisma.chatbot.findFirst({ where: { isDefault: true } });
+
+    // Fetch the system prompt from the database
+    const systemPrompt = await prisma.systemPrompt.findFirst({ where: { isActive: true } });
+
     if (config) {
-      return NextResponse.json(config);
+      return NextResponse.json({
+        ...config,
+        systemPrompt: systemPrompt ? systemPrompt.prompt : "Default system prompt"
+      });
     }
-    
-    // Otherwise return default values
+
     return NextResponse.json({
       welcomeMessage: "Hello! I'm your AI assistant. How can I help you today?",
       model: "gpt-3.5-turbo",
       temperature: 0.7,
-      maxTokens: 800
+      maxTokens: 800,
+      systemPrompt: systemPrompt ? systemPrompt.prompt : "Default system prompt"
     });
   } catch (error) {
     console.error("[API] Error fetching chatbot config:", error);

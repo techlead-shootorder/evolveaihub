@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Chatbot {
+  id            String  @id @default(uuid())  
+  companyName   String  
+  companyDescription String
+  industry      String
+  location      String
+  operatingHours String?
+  email         String
+  phone         String?
+  address       String?
+  services      Json
+  pricing       String?
+  serviceAreas  String?
+  botName       String
+  welcomeMessage String
+  fallbackMessage String?
+  personality   String
+  faqs          Json
+  policies      Json
+  createdAt     DateTime @default(now())
+}

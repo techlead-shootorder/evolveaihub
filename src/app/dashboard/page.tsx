@@ -1,18 +1,15 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from "next/navigation";
 import DashboardContent from '@/components/Dashboard/DashboardContent';
 import CreateChatbotForm from '@/components/Chatbots/CreateChatbotForm';
 import ChatbotAnalytics from '@/components/Chatbots/ChatbotAnalytics';
 import MyChatbots from '@/components/Chatbots/MyChatbots';
-import IntegrationSettings from '@/components/Chatbots/IntegrationSettings'
-import ProfileSettings from '@/components/Dashboard/ProfileSettings'
-import SubscriptionManagement from '@/components/Dashboard/SubscriptionManagement'
+import IntegrationSettings from '@/components/Chatbots/IntegrationSettings';
+import ProfileSettings from '@/components/Dashboard/ProfileSettings';
+import SubscriptionManagement from '@/components/Dashboard/SubscriptionManagement';
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
-
-// import SupportCenter from '@/components/Dashboard/Support';
-
-// import { Card } from "@/components/ui/card";
 
 // SVG Icons Component
 const Icons = {
@@ -33,24 +30,25 @@ const Icons = {
       <line x1="16" y1="16" x2="16" y2="16"></line>
     </svg>
   ),
-  // Add other icons...
 };
 
-// Placeholder Components (These will be replaced with actual components)
-// const DashboardContent = () => <div>Dashboard Content (Overview, Stats, etc)</div>;
-// const MyChatbots = () => <div>My Chatbots List</div>;
-// const CreateChatbot = () => <div>Create New Chatbot Form</div>;
-// const ChatbotAnalytics = () => <div>Chatbot Analytics Dashboard</div>;
-// const IntegrationSettings = () => <div>Integration Settings Panel</div>;
-// const ProfileSettings = () => <div>Profile Settings Form</div>;
-// const SubscriptionManagement = () => <div>Subscription Management Panel</div>;
 const Support = () => <div>Support Center</div>;
+
+interface UserData {
+  id?: string;
+  email?: string;
+  password?: string;
+  createdAt?: string;
+}
 
 const DashboardLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [chatbotCreated, setChatbotCreated] = useState(false);
+  const router = useRouter();
 
-  // Navigation Items
+  // Navigation Items - Move outside component or memoize if needed
   const mainNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
     { id: 'chatbots', label: 'My Chatbots', icon: Icons.Bot },
@@ -65,48 +63,40 @@ const DashboardLayout = () => {
     { id: 'support', label: 'Support', icon: Icons.Dashboard },
     { id: 'logout', label: 'Logout', icon: Icons.Dashboard },
   ];
-  const [chatbotCreated, setChatbotCreated] = useState(false);
-  // Component to render based on active page
-  const renderComponent = () => {
 
-    if (chatbotCreated) {
-      return <ChatbotPreview />;
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const userData = JSON.parse(localStorage.getItem("userData") ?? "{}") as UserData;
+        if (!userData || !userData.id) {
+          router.push("/login");
+        } else {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        router.push("/login");
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("userData");
+    router.push("/login");
+  };
+
+  const handleNavigation = (itemId: string) => {
+    if (itemId === 'logout') {
+      handleLogout();
+      return;
     }
-    switch (activePage) {
-      case 'dashboard':
-        return <DashboardContent/>;
-      case 'chatbots':
-        return <MyChatbots />;
-      case 'create':
-        return <CreateChatbotForm onCreate={() => setChatbotCreated(true)} />;
-      case 'analytics':
-        return <ChatbotAnalytics />;
-      case 'integration':
-        return <IntegrationSettings />;
-      case 'profile':
-        return <ProfileSettings />;
-      case 'subscription':
-        return <SubscriptionManagement />;
-      case 'support':
-        return <Support />;
-      case 'logout':
-        // Handle logout logic
-        return null;
-      default:
-        return <SubscriptionManagement />;
-    }
+    setActivePage(itemId);
   };
 
   const NavItem = ({ item, isBottom = false }) => (
     <button
-      onClick={() => {
-        if (item.id === 'logout') {
-          // Handle logout logic
-          console.log('Logging out...');
-          return;
-        }
-        setActivePage(item.id);
-      }}
+      onClick={() => handleNavigation(item.id)}
       className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
         activePage === item.id
           ? 'bg-blue-100 text-blue-600'
@@ -118,15 +108,38 @@ const DashboardLayout = () => {
     </button>
   );
 
+  const renderComponent = () => {
+    if (!isAuthenticated) return null;
+    
+    if (chatbotCreated) {
+      return <ChatbotPreview />;
+    }
+
+    const components = {
+      dashboard: <DashboardContent />,
+      chatbots: <MyChatbots />,
+      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} />,
+      analytics: <ChatbotAnalytics />,
+      integration: <IntegrationSettings />,
+      profile: <ProfileSettings />,
+      subscription: <SubscriptionManagement />,
+      support: <Support />,
+    };
+
+    return components[activePage] || <DashboardContent />;
+  };
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <aside
         className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${
           isCollapsed ? 'w-16' : 'w-64'
         } fixed h-full`}
       >
-        {/* Logo Area */}
         <div className="h-16 border-b flex items-center justify-between px-4">
           {!isCollapsed && <span className="text-xl font-bold">EvolveAI</span>}
           <button
@@ -145,16 +158,13 @@ const DashboardLayout = () => {
           </button>
         </div>
 
-        {/* Navigation */}
         <div className="flex-1 flex flex-col justify-between p-4 overflow-y-auto">
-          {/* Main Navigation Items */}
           <div className="space-y-1">
             {mainNavItems.map((item) => (
               <NavItem key={item.id} item={item} />
             ))}
           </div>
 
-          {/* Bottom Navigation Items */}
           <div className="border-t pt-4">
             {bottomNavItems.map((item) => (
               <NavItem key={item.id} item={item} isBottom />
@@ -163,16 +173,13 @@ const DashboardLayout = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className={`flex-1 ${isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
-        {/* Header */}
         <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 z-10 flex items-center justify-between px-6" style={{ marginLeft: isCollapsed ? '4rem' : '16rem' }}>
           <h1 className="text-xl font-semibold text-gray-800">
             {mainNavItems.concat(bottomNavItems).find(item => item.id === activePage)?.label || 'Dashboard'}
           </h1>
         </header>
 
-        {/* Page Content */}
         <main className="p-6 mt-16">
           {renderComponent()}
         </main>

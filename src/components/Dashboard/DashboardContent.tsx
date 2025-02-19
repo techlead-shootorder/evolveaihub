@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 
-const DashboardContent = () => {
+const DashboardContent = ({setActivePage}) => {
   // Mock data for chatbots
   const [chatbots] = useState([
     {
@@ -75,8 +75,9 @@ const DashboardContent = () => {
             </div>
             <div className="mt-4 flex md:mt-0 md:ml-4">
               <a
-                href="/dashboard/create"
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                onClick={()=> setActivePage('create')}
+                
+                className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create New Bot

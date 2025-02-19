@@ -2,6 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+
+
 import DashboardContent from '@/components/Dashboard/DashboardContent';
 import CreateChatbotForm from '@/components/Chatbots/CreateChatbotForm';
 import ChatbotAnalytics from '@/components/Chatbots/ChatbotAnalytics';
@@ -10,6 +14,9 @@ import IntegrationSettings from '@/components/Chatbots/IntegrationSettings';
 import ProfileSettings from '@/components/Dashboard/ProfileSettings';
 import SubscriptionManagement from '@/components/Dashboard/SubscriptionManagement';
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
+import { signOut } from "next-auth/react";
+
+import { useSession } from "next-auth/react";
 
 // SVG Icons Component
 const Icons = {
@@ -48,6 +55,11 @@ const DashboardLayout = () => {
   const [chatbotCreated, setChatbotCreated] = useState(false);
   const router = useRouter();
 
+
+  const { data: session, status } = useSession();
+
+
+  //  window.location.reload();
   // Navigation Items - Move outside component or memoize if needed
   const mainNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
@@ -61,27 +73,34 @@ const DashboardLayout = () => {
     { id: 'profile', label: 'Profile Settings', icon: Icons.Dashboard },
     { id: 'subscription', label: 'Subscription', icon: Icons.Dashboard },
     { id: 'support', label: 'Support', icon: Icons.Dashboard },
-    { id: 'logout', label: 'Logout', icon: Icons.Dashboard },
+    // { id: 'logout', label: 'Logout', icon: Icons.Dashboard },
   ];
 
   useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const userData = JSON.parse(localStorage.getItem("userData") ?? "{}") as UserData;
-        if (!userData || !userData.id) {
-          router.push("/login");
-        } else {
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
+    const checkAuth = async () => {
+      // Wait until session is loaded
+      if (status === "loading") return;
+
+      // Get user data from localStorage (for manual login)
+      const userData = JSON.parse(localStorage.getItem("userData") ?? "{}") as UserData;
+        
+      // If neither session nor userData exists, redirect to login
+      if (!userData?.id && !session) {
+        // console.log("Redirecting to login...");
         router.push("/login");
+      } else {
+        setIsAuthenticated(true);
       }
-    };
-    
+       
+    }
+
+
     checkAuth();
-  }, [router]);
+  }, [session, status]);
 
   const handleLogout = () => {
+    signOut();
+    setIsAuthenticated(false);
     localStorage.removeItem("userData");
     router.push("/login");
   };
@@ -97,26 +116,25 @@ const DashboardLayout = () => {
   const NavItem = ({ item, isBottom = false }) => (
     <button
       onClick={() => handleNavigation(item.id)}
-      className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-        activePage === item.id
-          ? 'bg-blue-100 text-blue-600'
-          : 'text-gray-600 hover:bg-gray-100'
-      } ${isBottom ? 'mt-1' : 'mb-1'}`}
+      className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${activePage === item.id
+        ? 'bg-blue-100 text-blue-600'
+        : 'text-gray-600 hover:bg-gray-100'
+        } ${isBottom ? 'mt-1' : 'mb-1'}`}
     >
       <item.icon />
-      {!isCollapsed && <span className="ml-3">{item.label}</span>}
+      {!isCollapsed && <span className={`ml-3 `}>{item.label}</span>}
     </button>
   );
 
   const renderComponent = () => {
     if (!isAuthenticated) return null;
-    
+
     if (chatbotCreated) {
       return <ChatbotPreview />;
     }
 
     const components = {
-      dashboard: <DashboardContent />,
+      dashboard: <DashboardContent setActivePage={setActivePage} />,
       chatbots: <MyChatbots />,
       create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} />,
       analytics: <ChatbotAnalytics />,
@@ -133,12 +151,13 @@ const DashboardLayout = () => {
     return null;
   }
 
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
+
       <aside
-        className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${
-          isCollapsed ? 'w-16' : 'w-64'
-        } fixed h-full`}
+        className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${isCollapsed ? 'w-16' : 'w-64'
+          } fixed h-full`}
       >
         <div className="h-16 border-b flex items-center justify-between px-4">
           {!isCollapsed && <span className="text-xl font-bold">EvolveAI</span>}
@@ -170,6 +189,9 @@ const DashboardLayout = () => {
               <NavItem key={item.id} item={item} isBottom />
             ))}
           </div>
+          <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 rounded">
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -182,7 +204,18 @@ const DashboardLayout = () => {
 
         <main className="p-6 mt-16">
           {renderComponent()}
+
+          {/* <button onClick={() => {
+            setIsAuthenticated(false);
+            signOut()
+          }} className="bg-red-500 text-white px-4 py-2 rounded">
+            Logout
+          </button> */}
+          <div>
+
+          </div>
         </main>
+
       </div>
     </div>
   );

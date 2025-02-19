@@ -1,7 +1,9 @@
 "use client"
 import { useState } from "react";
 import { Lock, Mail, Eye, EyeOff, LogIn } from "lucide-react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import  {useRouter} from "next/navigation"
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function AuthPage() {
   
@@ -14,6 +16,9 @@ export default function AuthPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const router = useRouter();
+  
+  const [loading, setLoading] = useState(false);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,10 +27,10 @@ export default function AuthPage() {
   const handleSubmit = async (e) => {
 
     e.preventDefault();
-    console.log("formdata", formData) 
-
+     
     setError("");
     setSuccess("");
+    setLoading(true);
    
       if (formData.password !== formData.confirmPassword) {
         setError("Passwords do not match!");
@@ -54,14 +59,19 @@ export default function AuthPage() {
         setSuccess("User registered successfully!");
         setTimeout(() => router.push("/login"), 2000);
       } catch (err) {
+        setLoading(false);
         setError("Something went wrong, please try again.");
       }
     } 
   
 
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked");
-  };
+    const handleGoogleSignIn = async () => {
+      try {
+        await signIn("google", { callbackUrl: "/dashboard" });
+      } catch (error) {
+        console.log("Error occurred in Google sign-in", error);
+      }
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -147,7 +157,7 @@ export default function AuthPage() {
               type="submit"
               className="w-full bg-indigo-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition duration-200 ease-in-out transform hover:-translate-y-1"
             >
-              Create Account
+              {loading ? <LoadingSpinner/> :  'Create Account'}
             </button>
           </form>
 
@@ -161,7 +171,7 @@ export default function AuthPage() {
           </div>
 
           <button
-            onClick={handleGoogleLogin}
+            onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center bg-white border border-gray-300 py-3 rounded-lg shadow-sm hover:shadow-md transition duration-200 ease-in-out transform hover:-translate-y-1"
           >
             {/* Google Icon */}

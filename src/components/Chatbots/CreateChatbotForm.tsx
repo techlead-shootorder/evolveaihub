@@ -77,7 +77,26 @@ function CreateChatbotForm({ onCreate }) {
   };
 
   const handleSubmit = async () => {
-    try {
+      // Below route is our logic 
+      try{
+      const response = await fetch('/api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+    
+      const result = await response.json();
+      console.log('Response from API:', result);
+    } catch (error){
+      console.log("error", error);
+    }
+
+    return;
+
+      //Below route is for chatbot 
+     try {
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

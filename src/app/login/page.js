@@ -40,7 +40,8 @@ export default function AuthPage() {
 
             if (!res.ok) {
                 //   setError(data.error); // check what's the error
-                setError("Something Went Wrong");
+                setLoading(false);
+                setError("Invalid Credentials");
                 return;
             }
             console.log("response", data);

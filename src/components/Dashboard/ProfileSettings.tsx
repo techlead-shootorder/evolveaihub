@@ -51,7 +51,12 @@ function ProfileSettings( {manualUser, googleUser} ) {
     </button>
   );
 
+  function capitalizeFirstLetter(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
   const renderProfileTab = () => (
+
     <div className="space-y-6">
       <Card>
         <CardHeader>
@@ -64,7 +69,7 @@ function ProfileSettings( {manualUser, googleUser} ) {
                 Full Name
               </label>
               <Input
-                value={manualUser ? manualUser?.fullName : googleUser.name}
+                value={manualUser ? capitalizeFirstLetter(manualUser?.fullName) : capitalizeFirstLetter(googleUser.name)}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Enter your full name"
                 disabled={!isEditing}

@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
 
-function CreateChatbotForm({ onCreate }) {
+function CreateChatbotForm({ onCreate, manualUser, googleUser }) {
   const [step, setStep] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [errors, setErrors] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [formData, setFormData] = useState({
     // Company Information
+
     companyName: '',
     companyDescription: '',
     industry: '',
@@ -44,7 +45,8 @@ function CreateChatbotForm({ onCreate }) {
       returns: '',
       privacy: '',
       terms: ''
-    }
+    },
+    createdBy: manualUser.id,
   });
 
   useEffect(() => {
@@ -54,7 +56,7 @@ function CreateChatbotForm({ onCreate }) {
   const handleInputChange = (field, value, index?, subfield?) => {
     setFormData(prev => {
       const newData = { ...prev };
-      
+
       if (index !== undefined && subfield) {
         // Handle array of objects (services, FAQs)
         newData[field][index][subfield] = value;
@@ -66,7 +68,7 @@ function CreateChatbotForm({ onCreate }) {
         // Handle top-level fields
         newData[field] = value;
       }
-      
+
       return newData;
     });
 
@@ -77,50 +79,55 @@ function CreateChatbotForm({ onCreate }) {
   };
 
   const handleSubmit = async () => {
-      // Below route is our logic 
-      try{
-      const response = await fetch('/api', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+    let updatedFormData = { ...formData, createdBy: manualUser?.id ? manualUser.id : '' }
+    // Below logic is for google user only
+    if (googleUser) {
+      try {
+        const getGoogleUser = await fetch(`/api/getUser?email=${googleUser.email}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
     
-      const result = await response.json();
-      console.log('Response from API:', result);
-    } catch (error){
-      console.log("error", error);
+        const googleUserData = await getGoogleUser.json();
+        updatedFormData = { ...formData, createdBy: googleUserData.user?.id };
+        console.log("Google user data with ID:", googleUserData);
+    
+      } catch (error) {
+        console.log("Error:", error);
+      }
     }
+    
 
-    return;
 
-      //Below route is for chatbot 
-     try {
+    //Below route is to create a chatbot 
+    try {
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updatedFormData),
       });
-  
+
       const result = await response.json();
       if (response.ok) {
         setShowPreview(true);
         if (onCreate) onCreate(); // Call the onCreate callback from parent
+        alert('Chat bot created')
       } else {
         alert('Error creating chatbot: ' + result.error);
       }
     } catch (error) {
       console.error("Error:", error);
-      alert('Error creating chatbot: ' + (error as Error).message);
+      alert('Error creating a chatbot: ' + (error as Error).message);
     }
   };
 
   const addArrayItem = (field: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: [...prev[field], 
-        field === 'services' ? { name: '', description: '' } :
+      [field]: [...prev[field],
+      field === 'services' ? { name: '', description: '' } :
         field === 'faqs' ? { question: '', answer: '' } : {}
       ]
     }));
@@ -391,9 +398,8 @@ function CreateChatbotForm({ onCreate }) {
                   key={num}
                   className={`flex items-center ${num < step ? 'text-blue-600' : num === step ? 'text-blue-600' : 'text-gray-400'}`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                    num <= step ? 'border-blue-600 bg-blue-50' : 'border-gray-300'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${num <= step ? 'border-blue-600 bg-blue-50' : 'border-gray-300'
+                    }`}>
                     {num}
                   </div>
                   {/* {num < 4 && <div className={`w-full h-1 mx-2 ${num < step ? 'bg-blue-600' : 'bg-gray-300'}`} />} */}
@@ -415,7 +421,7 @@ function CreateChatbotForm({ onCreate }) {
               Back
             </button>
           )}
-          
+
           <button
             type="button"
             onClick={() => {

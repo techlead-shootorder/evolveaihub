@@ -93,6 +93,7 @@ const DashboardLayout = () => {
         if(userData?.id){
           setManualUser(userData);
         }else{
+          
           setGoogleUser(session?.user);
         }
         
@@ -143,7 +144,7 @@ const DashboardLayout = () => {
     const components = {
       dashboard: <DashboardContent setActivePage={setActivePage} manualUser={manualUser} googleUser={googleUser} />,
       chatbots: <MyChatbots />,
-      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} />,
+      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} manualUser={manualUser} googleUser={googleUser}/>,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings />,
       profile: <ProfileSettings manualUser={manualUser} googleUser={googleUser}/>,
@@ -157,6 +158,10 @@ const DashboardLayout = () => {
   if (!isAuthenticated) {
     return null;
   }
+
+  function capitalizeFirstLetter(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 
   return (
@@ -207,7 +212,7 @@ const DashboardLayout = () => {
           <h1 className="text-xl font-semibold text-gray-800 flex justify-between w-full">
             {mainNavItems.concat(bottomNavItems).find(item => item.id === activePage)?.label || 'Dashboard'}
             <p className='text-black text-sm'>
-                {manualUser ? manualUser?.email : googleUser?.email}
+                {manualUser ? capitalizeFirstLetter(manualUser?.fullName) : googleUser?.name }
               </p>
           </h1>
         </header>

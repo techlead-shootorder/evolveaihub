@@ -58,6 +58,7 @@ const DashboardContent = ({setActivePage, manualUser, googleUser}) => {
       try {
         const res = await fetch("/api/getChatbot");
         const data = await res.json();
+        console.log("chatbot data", data)
         setChatBotData(data);
       } catch (error) {
         console.log("Error fetching chatbot:", error);

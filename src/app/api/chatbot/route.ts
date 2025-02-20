@@ -25,7 +25,8 @@ export async function POST(req: Request) {
         fallbackMessage: body.fallbackMessage,
         personality: body.personality,
         faqs: body.faqs,
-        policies: body.policies
+        policies: body.policies,
+        createdBy: body.createdBy
       },
     });
 

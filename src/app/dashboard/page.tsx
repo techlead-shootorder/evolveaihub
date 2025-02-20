@@ -15,6 +15,7 @@ import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
 import { signOut } from "next-auth/react";
 
 import { useSession } from "next-auth/react";
+import Image from 'next/image';
 
 // SVG Icons Component
 const Icons = {
@@ -83,22 +84,22 @@ const DashboardLayout = () => {
 
       // Get user data from localStorage (for manual login)
       const userData = JSON.parse(localStorage.getItem("userData") ?? "{}") as UserData;
-        
+
       // If neither session nor userData exists, redirect to login
       if (!userData?.id && !session) {
         // console.log("Redirecting to login...");
         router.push("/login");
       } else {
         setIsAuthenticated(true);
-        if(userData?.id){
+        if (userData?.id) {
           setManualUser(userData);
-        }else{
-          
+        } else {
+
           setGoogleUser(session?.user);
         }
-        
+
       }
-       
+
     }
     checkAuth();
   }, [session, status]);
@@ -144,10 +145,10 @@ const DashboardLayout = () => {
     const components = {
       dashboard: <DashboardContent setActivePage={setActivePage} manualUser={manualUser} googleUser={googleUser} />,
       chatbots: <MyChatbots />,
-      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} manualUser={manualUser} googleUser={googleUser}/>,
+      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} manualUser={manualUser} googleUser={googleUser} />,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings />,
-      profile: <ProfileSettings manualUser={manualUser} googleUser={googleUser}/>,
+      profile: <ProfileSettings manualUser={manualUser} googleUser={googleUser} />,
       subscription: <SubscriptionManagement />,
       support: <Support />,
     };
@@ -161,7 +162,24 @@ const DashboardLayout = () => {
 
   function capitalizeFirstLetter(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
-}
+  }
+
+  const ProfilePicture = ({userName}) => {
+    function getInitials(name) {
+      if (!name) return "";
+      
+      let words = name.trim().split(" ").filter(word => word.length > 0);
+      let initials = words.map(word => word.charAt(0).toUpperCase());
+      
+      return initials.join("");
+  }
+
+    return (
+     googleUser ? <Image alt='profile-image' className='rounded-full' src={googleUser.image} width={30} height={30}/> :  <div className='p-[18px] w-8 h-8 rounded-full bg-red-500 text-white flex justify-center items-center'>
+        {getInitials(userName)}
+      </div>
+    )
+  }
 
 
   return (
@@ -211,9 +229,12 @@ const DashboardLayout = () => {
         <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 z-10 flex items-center justify-between px-6" style={{ marginLeft: isCollapsed ? '4rem' : '16rem' }}>
           <h1 className="text-xl font-semibold text-gray-800 flex justify-between w-full">
             {mainNavItems.concat(bottomNavItems).find(item => item.id === activePage)?.label || 'Dashboard'}
-            <p className='text-black text-sm'>
-                {manualUser ? capitalizeFirstLetter(manualUser?.fullName) : googleUser?.name }
+            <div className='flex items-center gap-2'>
+               <ProfilePicture userName={manualUser ? manualUser.fullName : googleUser.name}/>
+              <p className='text-black text-[16px]'>
+                {manualUser ? capitalizeFirstLetter(manualUser?.fullName) : googleUser?.name}
               </p>
+            </div>
           </h1>
         </header>
 

@@ -396,7 +396,7 @@ function CreateChatbotForm({ onCreate }) {
                   }`}>
                     {num}
                   </div>
-                  {num < 4 && <div className={`w-full h-1 mx-2 ${num < step ? 'bg-blue-600' : 'bg-gray-300'}`} />}
+                  {/* {num < 4 && <div className={`w-full h-1 mx-2 ${num < step ? 'bg-blue-600' : 'bg-gray-300'}`} />} */}
                 </div>
               ))}
             </div>

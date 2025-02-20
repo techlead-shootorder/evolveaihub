@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-function ProfileSettings() {
+function ProfileSettings( {manualUser, googleUser} ) {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [profile, setProfile] = useState({
@@ -64,7 +64,7 @@ function ProfileSettings() {
                 Full Name
               </label>
               <Input
-                value={profile.name}
+                value={manualUser ? manualUser?.fullName : googleUser.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Enter your full name"
                 disabled={!isEditing}
@@ -77,7 +77,7 @@ function ProfileSettings() {
               </label>
               <Input
                 type="email"
-                value={profile.email}
+                value={manualUser ? manualUser?.email : googleUser.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter your email"
                 disabled={!isEditing}
@@ -89,7 +89,7 @@ function ProfileSettings() {
                 Company
               </label>
               <Input
-                value={profile.company}
+                value={manualUser ? manualUser?.company : googleUser?.company ? googleUser.company : ''}
                 onChange={(e) => handleInputChange('company', e.target.value)}
                 placeholder="Enter your company name"
                 disabled={!isEditing}
@@ -101,7 +101,7 @@ function ProfileSettings() {
                 Phone Number
               </label>
               <Input
-                value={profile.phone}
+                value={manualUser ? manualUser?.phone : googleUser?.phone ? googleUser?.phone : ''}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="Enter your phone number"
                 disabled={!isEditing}

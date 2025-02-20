@@ -4,8 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
-
 import DashboardContent from '@/components/Dashboard/DashboardContent';
 import CreateChatbotForm from '@/components/Chatbots/CreateChatbotForm';
 import ChatbotAnalytics from '@/components/Chatbots/ChatbotAnalytics';
@@ -53,6 +51,8 @@ const DashboardLayout = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [chatbotCreated, setChatbotCreated] = useState(false);
+  const [googleUser, setGoogleUser] = useState('');
+  const [manualUser, setManualUser] = useState('');
   const router = useRouter();
 
 
@@ -90,13 +90,20 @@ const DashboardLayout = () => {
         router.push("/login");
       } else {
         setIsAuthenticated(true);
+        if(userData?.id){
+          setManualUser(userData);
+        }else{
+          setGoogleUser(session?.user);
+        }
+        
       }
        
     }
-
-
     checkAuth();
   }, [session, status]);
+
+  console.log("manual user", manualUser);
+  console.log("google user", googleUser);
 
   const handleLogout = () => {
     signOut();
@@ -134,12 +141,12 @@ const DashboardLayout = () => {
     }
 
     const components = {
-      dashboard: <DashboardContent setActivePage={setActivePage} />,
+      dashboard: <DashboardContent setActivePage={setActivePage} manualUser={manualUser} googleUser={googleUser} />,
       chatbots: <MyChatbots />,
       create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} />,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings />,
-      profile: <ProfileSettings />,
+      profile: <ProfileSettings manualUser={manualUser} googleUser={googleUser}/>,
       subscription: <SubscriptionManagement />,
       support: <Support />,
     };
@@ -197,8 +204,11 @@ const DashboardLayout = () => {
 
       <div className={`flex-1 ${isCollapsed ? 'ml-16' : 'ml-64'} transition-all duration-300`}>
         <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 z-10 flex items-center justify-between px-6" style={{ marginLeft: isCollapsed ? '4rem' : '16rem' }}>
-          <h1 className="text-xl font-semibold text-gray-800">
+          <h1 className="text-xl font-semibold text-gray-800 flex justify-between w-full">
             {mainNavItems.concat(bottomNavItems).find(item => item.id === activePage)?.label || 'Dashboard'}
+            <p className='text-black text-sm'>
+                {manualUser ? manualUser?.email : googleUser?.email}
+              </p>
           </h1>
         </header>
 

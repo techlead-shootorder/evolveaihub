@@ -128,7 +128,8 @@ function MyChatbots() {
                       </svg>
                     }
                     label="Total Conversations"
-                    value={bot.totalConversations.toLocaleString()}
+                    // value={bot.totalConversations.toLocaleString()}
+                    value={0}
                   />
                   <QuickStats
                     icon={

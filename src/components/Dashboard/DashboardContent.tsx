@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Bot, 
   Plus, 
@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 
-const DashboardContent = ({setActivePage}) => {
+const DashboardContent = ({setActivePage, manualUser, googleUser}) => {
   // Mock data for chatbots
   const [chatbots] = useState([
     {
@@ -51,6 +51,21 @@ const DashboardContent = ({setActivePage}) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [chatbotData, setChatBotData] = useState(null);
+
+  useEffect(() => {
+    const fetchChatbot = async () => {
+      try {
+        const res = await fetch("/api/getChatbot");
+        const data = await res.json();
+        setChatBotData(data);
+      } catch (error) {
+        console.log("Error fetching chatbot:", error);
+      }
+    };
+
+    fetchChatbot(); // Call the async function inside useEffect
+  }, []);
 
   const filteredBots = chatbots.filter(bot => {
     const matchesSearch = bot.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -72,6 +87,7 @@ const DashboardContent = ({setActivePage}) => {
               <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl">
                 Chatbot Management
               </h1>
+            
             </div>
             <div className="mt-4 flex md:mt-0 md:ml-4">
               <a
@@ -96,7 +112,7 @@ const DashboardContent = ({setActivePage}) => {
               <CardTitle className="text-sm font-medium text-gray-500">Total Bots</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{chatbots.length}</div>
+              <div className="text-2xl font-bold">{chatbotData && chatbotData?.length}</div>
             </CardContent>
           </Card>
 
@@ -106,7 +122,8 @@ const DashboardContent = ({setActivePage}) => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {chatbots.filter(bot => bot.status === 'active').length}
+                {/* {chatbots.filter(bot => bot.status === 'active').length} */}
+                {chatbotData && chatbotData?.length}
               </div>
             </CardContent>
           </Card>
@@ -117,7 +134,7 @@ const DashboardContent = ({setActivePage}) => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {chatbots.reduce((sum, bot) => sum + bot.conversations, 0)}
+                {/* {chatbots.reduce((sum, bot) => sum + bot.conversations, 0)} */}0
               </div>
             </CardContent>
           </Card>
@@ -128,7 +145,8 @@ const DashboardContent = ({setActivePage}) => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {(chatbots.reduce((sum, bot) => sum + bot.satisfaction, 0) / chatbots.length).toFixed(1)}
+                {/* {(chatbots.reduce((sum, bot) => sum + bot.satisfaction, 0) / chatbots.length).toFixed(1)} */}
+                0
               </div>
             </CardContent>
           </Card>
@@ -200,10 +218,10 @@ const DashboardContent = ({setActivePage}) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {bot.conversations}
+                      {/* {bot.conversations} */}0
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {bot.avgResponseTime}
+                      {/* {bot.avgResponseTime} */}0
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {bot.lastActive}

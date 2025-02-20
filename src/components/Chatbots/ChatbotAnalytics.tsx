@@ -136,7 +136,9 @@ function ChatbotAnalytics() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalConversations}</div>
+            {/* <div className="text-2xl font-bold">{totalConversations}</div> */}
+            <div className="text-2xl font-bold">0</div>
+
             <p className="text-sm text-green-500">+12% from last period</p>
           </CardContent>
         </Card>

@@ -52,8 +52,7 @@ const DashboardLayout = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [chatbotCreated, setChatbotCreated] = useState(false);
-  const [googleUser, setGoogleUser] = useState('');
-  const [manualUser, setManualUser] = useState('');
+  const [userDetails, setUserDetails] = useState(null);
   const router = useRouter();
 
 
@@ -89,13 +88,33 @@ const DashboardLayout = () => {
       if (!userData?.id && !session) {
         // console.log("Redirecting to login...");
         router.push("/login");
-      } else {
-        setIsAuthenticated(true);
-        if (userData?.id) {
-          setManualUser(userData);
-        } else {
+      } 
+      else {
+        
+        if (userData?.id) { // Manual User
+          console.log("manual user", userData);
+          setUserDetails(userData);
+          setIsAuthenticated(true);
+        } 
+        else { // Google User
+          try {
+            const response = await fetch(`/api/getUser?email=${session?.user?.email}`);
+            const data = await response.json();
+            if (!response.ok) {
+              throw new Error(data.error || "Something went wrong");
+            }
+        
+            console.log("google user data", data.user) // Return the user data if successful
+            localStorage.setItem("userData", JSON.stringify(data.user));
+            setUserDetails(data.user);
+            setIsAuthenticated(true);
+          } 
+          catch (error) {
+            console.error("Error fetching user:", error.message);
+            return null; // Return null if an error occurs
+          }
 
-          setGoogleUser(session?.user);
+          
         }
 
       }
@@ -104,8 +123,7 @@ const DashboardLayout = () => {
     checkAuth();
   }, [session, status]);
 
-  console.log("manual user", manualUser);
-  console.log("google user", googleUser);
+ 
 
   const handleLogout = () => {
     signOut();
@@ -143,12 +161,12 @@ const DashboardLayout = () => {
     }
 
     const components = {
-      dashboard: <DashboardContent setActivePage={setActivePage} manualUser={manualUser} googleUser={googleUser} />,
-      chatbots: <MyChatbots />,
-      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} manualUser={manualUser} googleUser={googleUser} />,
+      dashboard: <DashboardContent setActivePage={setActivePage} userDetails={userDetails} />,
+      chatbots: <MyChatbots userDetails={userDetails} />,
+      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} />,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings />,
-      profile: <ProfileSettings manualUser={manualUser} googleUser={googleUser} />,
+      profile: <ProfileSettings userDetails={userDetails} />,
       subscription: <SubscriptionManagement />,
       support: <Support />,
     };
@@ -175,7 +193,7 @@ const DashboardLayout = () => {
   }
 
     return (
-     googleUser ? <Image alt='profile-image' className='rounded-full' src={googleUser.image} width={30} height={30}/> :  <div className='p-[18px] w-8 h-8 rounded-full bg-red-500 text-white flex justify-center items-center'>
+      <div className='p-[18px] w-8 h-8 rounded-full bg-red-500 text-white flex justify-center items-center'>
         {getInitials(userName)}
       </div>
     )
@@ -230,9 +248,9 @@ const DashboardLayout = () => {
           <h1 className="text-xl font-semibold text-gray-800 flex justify-between w-full">
             {mainNavItems.concat(bottomNavItems).find(item => item.id === activePage)?.label || 'Dashboard'}
             <div className='flex items-center gap-2'>
-               <ProfilePicture userName={manualUser ? manualUser.fullName : googleUser.name}/>
+               <ProfilePicture userName={userDetails.fullName}/>
               <p className='text-black text-[16px]'>
-                {manualUser ? capitalizeFirstLetter(manualUser?.fullName) : googleUser?.name}
+                {capitalizeFirstLetter(userDetails?.fullName)}
               </p>
             </div>
           </h1>

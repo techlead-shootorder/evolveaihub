@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 
-const DashboardContent = ({setActivePage, manualUser, googleUser}) => {
+const DashboardContent = ({setActivePage, userDetails}) => {
   // Mock data for chatbots
   const [chatbots] = useState([
     {
@@ -56,7 +56,7 @@ const DashboardContent = ({setActivePage, manualUser, googleUser}) => {
   useEffect(() => {
     const fetchChatbot = async () => {
       try {
-        const res = await fetch("/api/getChatbot");
+        const res = await fetch(`/api/getChatbot?id=${userDetails.id}`);
         const data = await res.json();
         console.log("chatbot data", data)
         setChatBotData(data);
@@ -205,27 +205,27 @@ const DashboardContent = ({setActivePage, manualUser, googleUser}) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBots.map((bot) => (
+                {chatbotData && chatbotData.length > 0 && chatbotData.map((bot) => (
                   <tr key={bot.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Bot className="w-5 h-5 text-gray-400 mr-2" />
-                        <div className="text-sm font-medium text-gray-900">{bot.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{bot.botName}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(bot.status)}`}>
-                        {bot.status}
+                        {/* {bot.status} */} null
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {/* {bot.conversations} */}0
+                      {/* {bot.conversations} */}null
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {/* {bot.avgResponseTime} */}0
+                      {/* {bot.avgResponseTime} */}null
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {bot.lastActive}
+                      {/* {bot.lastActive} */} null
                     </td>
                     {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <DropdownMenu>

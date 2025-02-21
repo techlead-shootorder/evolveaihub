@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-function MyChatbots() {
+function MyChatbots({userDetails}) {
   const [selectedChatbot, setSelectedChatbot] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+   const [chatbotData, setChatBotData] = useState(null);
+
+   useEffect(() => {
+       const fetchChatbot = async () => {
+         try {
+           const res = await fetch(`/api/getChatbot?id=${userDetails.id}`);
+           const data = await res.json();
+           console.log("chatbot data", data)
+           setChatBotData(data);
+         } catch (error) {
+           console.log("Error fetching chatbot:", error);
+         }
+       };
+   
+       fetchChatbot(); // Call the async function inside useEffect
+     }, []);
 
   // Mock data - replace with API call
   const [chatbots] = useState([
@@ -96,7 +112,7 @@ function MyChatbots() {
 
       {/* Chatbots Grid */}
       <div className="grid gap-6">
-        {chatbots.map((bot) => (
+        {chatbotData && chatbotData.length > 0 &&  chatbotData.map((bot) => (
           <Card 
             key={bot.id}
             className={`transition-shadow hover:shadow-md ${
@@ -109,13 +125,13 @@ function MyChatbots() {
                 <div className="md:col-span-2">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{bot.name}</h3>
-                      <p className="text-sm text-gray-500">{bot.description}</p>
+                      <h3 className="text-lg font-semibold text-gray-900">{bot.botName}</h3>
+                      <p className="text-sm text-gray-500">{bot.companyDescription}</p>
                     </div>
-                    <StatusBadge status={bot.status} />
+                    <StatusBadge status={bot?.status ? bot?.status : 'null'} />
                   </div>
                   <div className="mt-4 text-sm text-gray-500">
-                    Created on {new Date(bot.created).toLocaleDateString()}
+                    Created on {new Date(bot.createdAt).toLocaleDateString()}
                   </div>
                 </div>
 
@@ -139,7 +155,7 @@ function MyChatbots() {
                       </svg>
                     }
                     label="Success Rate"
-                    value={bot.successRate}
+                    value={bot?.successRate ? bot?.successRate : 'null'}
                   />
                   <QuickStats
                     icon={
@@ -149,7 +165,7 @@ function MyChatbots() {
                       </svg>
                     }
                     label="Last Active"
-                    value={new Date(bot.lastActive).toLocaleDateString()}
+                    value={new Date(bot?.lastActive ? bot.lastActive : 'null').toLocaleDateString()}
                   />
                 </div>
 

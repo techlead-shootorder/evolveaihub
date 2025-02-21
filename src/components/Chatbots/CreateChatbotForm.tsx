@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
 
-function CreateChatbotForm({ onCreate, manualUser, googleUser }) {
+function CreateChatbotForm({ onCreate, userDetails}) {
   const [step, setStep] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [errors, setErrors] = useState({});
@@ -46,7 +46,7 @@ function CreateChatbotForm({ onCreate, manualUser, googleUser }) {
       privacy: '',
       terms: ''
     },
-    createdBy: manualUser.id,
+    createdBy: userDetails.id,
   });
 
   useEffect(() => {
@@ -79,28 +79,8 @@ function CreateChatbotForm({ onCreate, manualUser, googleUser }) {
   };
 
   const handleSubmit = async () => {
-    let updatedFormData = { ...formData, createdBy: manualUser?.id ? manualUser.id : '' }
-    // Below logic is for google user only
-    if (googleUser) {
-      try {
-        const getGoogleUser = await fetch(`/api/getUser?email=${googleUser.email}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+    let updatedFormData = { ...formData, createdBy: userDetails.id}
     
-        const googleUserData = await getGoogleUser.json();
-        updatedFormData = { ...formData, createdBy: googleUserData.user?.id };
-        console.log("Google user data with ID:", googleUserData);
-    
-      } catch (error) {
-        console.log("Error:", error);
-      }
-    }
-    
-
-
     //Below route is to create a chatbot 
     try {
       const response = await fetch('/api/chatbot', {
@@ -108,7 +88,6 @@ function CreateChatbotForm({ onCreate, manualUser, googleUser }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedFormData),
       });
-
       const result = await response.json();
       if (response.ok) {
         setShowPreview(true);

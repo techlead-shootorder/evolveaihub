@@ -30,6 +30,7 @@ export const authOptions = {
         
           await prisma.user.create({
             data: {
+              fullName: user.name,
               email: user.email,
               password: '123456', // Google users don't have a password
             },

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-function ProfileSettings( {manualUser, googleUser} ) {
+function ProfileSettings( {userDetails} ) {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [profile, setProfile] = useState({
@@ -69,7 +69,7 @@ function ProfileSettings( {manualUser, googleUser} ) {
                 Full Name
               </label>
               <Input
-                value={manualUser ? capitalizeFirstLetter(manualUser?.fullName) : capitalizeFirstLetter(googleUser.name)}
+                value={capitalizeFirstLetter(userDetails?.fullName)}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Enter your full name"
                 disabled={!isEditing}
@@ -82,7 +82,7 @@ function ProfileSettings( {manualUser, googleUser} ) {
               </label>
               <Input
                 type="email"
-                value={manualUser ? manualUser?.email : googleUser.email}
+                value={userDetails.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter your email"
                 disabled={!isEditing}
@@ -94,7 +94,7 @@ function ProfileSettings( {manualUser, googleUser} ) {
                 Company
               </label>
               <Input
-                value={manualUser ? manualUser?.company : googleUser?.company ? googleUser.company : ''}
+                value={userDetails.company}
                 onChange={(e) => handleInputChange('company', e.target.value)}
                 placeholder="Enter your company name"
                 disabled={!isEditing}
@@ -106,7 +106,7 @@ function ProfileSettings( {manualUser, googleUser} ) {
                 Phone Number
               </label>
               <Input
-                value={manualUser ? manualUser?.phone : googleUser?.phone ? googleUser?.phone : ''}
+                value={userDetails.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="Enter your phone number"
                 disabled={!isEditing}

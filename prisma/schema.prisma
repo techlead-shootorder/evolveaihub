@@ -26,7 +26,7 @@ model Chatbot {
   personality   String
   faqs          Json
   policies      Json
-  createdBy     String
+  createdBy     String?
   createdAt     DateTime @default(now())
 }
 

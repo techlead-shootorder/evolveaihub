@@ -49,6 +49,7 @@ const DashboardLayout = () => {
   const [chatbotCreated, setChatbotCreated] = useState(false);
   const [userDetails, setUserDetails] = useState<any>(null);
   const [previewChatbotId, setPreviewChatbotId] = useState<number | null>(null); // New state for preview
+   const [showPreview, setShowPreview] = useState(false);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -116,7 +117,10 @@ const DashboardLayout = () => {
 
   const NavItem = ({ item, isBottom = false }) => (
     <button
-      onClick={() => handleNavigation(item.id)}
+      onClick={() => {
+        setShowPreview(false);
+        handleNavigation(item.id)
+      }}
       className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${activePage === item.id
         ? 'bg-blue-100 text-blue-600'
         : 'text-gray-600 hover:bg-gray-100'
@@ -131,13 +135,13 @@ const DashboardLayout = () => {
     if (!isAuthenticated) return null;
 
     if (chatbotCreated) {
-      return <ChatbotPreview />;
+      return <ChatbotPreview userDetails={userDetails}/>;
     }
 
     const components = {
       dashboard: <DashboardContent setActivePage={setActivePage} userDetails={userDetails} />,
       chatbots: <MyChatbots userDetails={userDetails} onPreview={handlePreviewChatbot} />, // Pass callback
-      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} />,
+      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} showPreview={showPreview} setShowPreview={setShowPreview}/>,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings />,
       profile: <ProfileSettings userDetails={userDetails} />,
@@ -237,7 +241,7 @@ const DashboardLayout = () => {
                   </svg>
                 </button>
               </div>
-              <ChatbotPreview botId={previewChatbotId} />
+              <ChatbotPreview userDetails={userDetails} botId={previewChatbotId} />
             </div>
           )}
         </main>

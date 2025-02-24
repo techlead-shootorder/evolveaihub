@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
+import LoadingSpinner from '../LoadingSpinner';
 
-function CreateChatbotForm({ onCreate, userDetails}) {
+function CreateChatbotForm({ onCreate, userDetails, showPreview, setShowPreview }) {
   const [step, setStep] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [errors, setErrors] = useState({});
-  const [showPreview, setShowPreview] = useState(false);
+  // const [showPreview, setShowPreview] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [createdChatBotData, setCreatedChatBotData] = useState('');
   const [formData, setFormData] = useState({
     // Company Information
 
@@ -79,8 +82,8 @@ function CreateChatbotForm({ onCreate, userDetails}) {
   };
 
   const handleSubmit = async () => {
-    let updatedFormData = { ...formData, createdBy: userDetails.id}
-    
+    let updatedFormData = { ...formData, createdBy: userDetails.id }
+    setLoading(true);
     //Below route is to create a chatbot 
     try {
       const response = await fetch('/api/chatbot', {
@@ -90,13 +93,18 @@ function CreateChatbotForm({ onCreate, userDetails}) {
       });
       const result = await response.json();
       if (response.ok) {
+        console.log("testing chatbot created response", result);
+        setCreatedChatBotData(result);
         setShowPreview(true);
         if (onCreate) onCreate(); // Call the onCreate callback from parent
+        setLoading(false)
         alert('Chat bot created')
       } else {
+        setLoading(false);
         alert('Error creating chatbot: ' + result.error);
       }
     } catch (error) {
+      setLoading(false);
       console.error("Error:", error);
       alert('Error creating a chatbot: ' + (error as Error).message);
     }
@@ -328,6 +336,7 @@ function CreateChatbotForm({ onCreate, userDetails}) {
   };
 
   if (showPreview) {
+    console.log("testing id", createdChatBotData.id);
     return (
       <div className="max-w-2xl mx-auto p-4">
         <Card>
@@ -336,7 +345,7 @@ function CreateChatbotForm({ onCreate, userDetails}) {
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-gray-600">Your chatbot has been created successfully! You can test it below.</p>
-            <ChatbotPreview />
+            <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id} />
           </CardContent>
           <CardFooter className="flex justify-between">
             <button
@@ -414,8 +423,9 @@ function CreateChatbotForm({ onCreate, userDetails}) {
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            {step === 4 ? 'Create Chatbot' : 'Next'}
+            {loading ? <LoadingSpinner /> : step === 4 ? 'Create Chatbot' : 'Next'}
           </button>
+
         </CardFooter>
       </Card>
     </div>

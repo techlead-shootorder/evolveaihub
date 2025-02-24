@@ -11,17 +11,20 @@ function MyChatbots({ userDetails, onPreview }: MyChatbotsProps) {
   const [chatbotData, setChatbotData] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log("userDetails in mychatbot", userDetails)
     const fetchChatbot = async () => {
       try {
-        const res = await fetch(`/api/getChatbot?id=${userDetails.id}`);
+
+        const res = await fetch(`/api/getChatbot?id=${userDetails?.id}`);
         const data = await res.json();
+        console.log("chatbot data", data);
         setChatbotData(data);
       } catch (error) {
         console.log("Error fetching chatbot:", error);
       }
     };
     fetchChatbot();
-  }, [userDetails.id]);
+  }, [userDetails]);
 
   const handleDelete = (botId: number) => {
     if (window.confirm('Are you sure you want to delete this chatbot?')) {
@@ -51,7 +54,7 @@ function MyChatbots({ userDetails, onPreview }: MyChatbotsProps) {
       <div className="grid gap-6">
         {chatbotData && chatbotData.length > 0 ? (
           chatbotData.map((bot) => (
-            <Card key={bot.id} className="transition-shadow hover:shadow-md">
+            <Card key={bot?.id} className="transition-shadow hover:shadow-md">
               <CardContent className="p-6">
                 <div className="grid md:grid-cols-4 gap-6">
                   <div className="md:col-span-2">
@@ -71,19 +74,19 @@ function MyChatbots({ userDetails, onPreview }: MyChatbotsProps) {
 
                   <div className="flex md:flex-col justify-end space-y-2">
                     <button
-                      onClick={() => onPreview(bot.id)} // Use callback
+                      onClick={() => onPreview(bot?.id)} // Use callback
                       className="w-full px-3 py-2 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors"
                     >
                       Preview
                     </button>
                     <button
-                      onClick={() => (window.location.href = `/dashboard/edit/${bot.id}`)}
+                      onClick={() => (window.location.href = `/dashboard/edit/${bot?.id}`)}
                       className="w-full px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                     >
                       Edit Chatbot
                     </button>
                     <button
-                      onClick={() => handleDelete(bot.id)}
+                      onClick={() => handleDelete(bot?.id)}
                       className="w-full px-3 py-2 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
                     >
                       Delete

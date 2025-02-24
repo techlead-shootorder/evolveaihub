@@ -75,7 +75,9 @@ const DashboardContent = ({setActivePage, userDetails}) => {
   });
 
   const getStatusColor = (status) => {
-    return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+    // return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+    return status ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+
   };
 
   return (
@@ -206,7 +208,8 @@ const DashboardContent = ({setActivePage, userDetails}) => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {chatbotData && chatbotData.length > 0 && chatbotData.map((bot) => (
-                  <tr key={bot.id}>
+                  <>
+                { filterStatus == 'all' && <tr key={bot.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Bot className="w-5 h-5 text-gray-400 mr-2" />
@@ -214,8 +217,8 @@ const DashboardContent = ({setActivePage, userDetails}) => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(bot.status)}`}>
-                        {/* {bot.status} */} null
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(bot.isDefault)}`}>
+                        {bot.isDefault ? 'active' : 'inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -248,7 +251,99 @@ const DashboardContent = ({setActivePage, userDetails}) => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td> */}
-                  </tr>
+                  </tr>}
+
+                  {filterStatus == 'active' && bot.isDefaut && <tr key={bot.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Bot className="w-5 h-5 text-gray-400 mr-2" />
+                        <div className="text-sm font-medium text-gray-900">{bot.botName}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(bot.isDefault)}`}>
+                        {bot.isDefault ? 'active' : 'inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* {bot.conversations} */}null
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* {bot.avgResponseTime} */}null
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* {bot.lastActive} */} null
+                    </td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="p-2 hover:bg-gray-100 rounded-full">
+                          <MoreVertical className="w-4 h-4 text-gray-400" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Settings
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <BarChart2 className="w-4 h-4 mr-2" />
+                            Analytics
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Conversations
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td> */}
+                  </tr>}
+
+                  {filterStatus == 'inactive' && !bot.isDefault && <tr key={bot.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Bot className="w-5 h-5 text-gray-400 mr-2" />
+                        <div className="text-sm font-medium text-gray-900">{bot.botName}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(bot.isDefault)}`}>
+                        {bot.isDefault ? 'active' : 'inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* {bot.conversations} */}null
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* {bot.avgResponseTime} */}null
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* {bot.lastActive} */} null
+                    </td>
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="p-2 hover:bg-gray-100 rounded-full">
+                          <MoreVertical className="w-4 h-4 text-gray-400" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Settings
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <BarChart2 className="w-4 h-4 mr-2" />
+                            Analytics
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Conversations
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td> */}
+                  </tr>}
+ 
+                  </>
+
+                  
                 ))}
               </tbody>
             </table>

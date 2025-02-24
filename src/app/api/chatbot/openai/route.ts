@@ -13,7 +13,7 @@ function createLeadCaptureSystemMessage(config: any, leadInfo: LeadInfo) {
   const missingInfo = [];
   if (!leadInfo.name) missingInfo.push("name");
   if (!leadInfo.email) missingInfo.push("email");
-  if (!leadInfo.phone) missingInfo.push("phone");
+  if (!leadInfo.phone) missingInfo.push(  "phone");
 
   if (missingInfo.length === 0) {
     return `You are ${config.botName}, an AI sales agent for ${config.companyName}. 

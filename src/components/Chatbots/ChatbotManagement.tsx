@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import React, { useState, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Activity, Power, MessageCircle, Calendar } from 'lucide-react';
 
 interface Chatbot {
   id: number;
@@ -9,7 +10,103 @@ interface Chatbot {
   interactions: number;
   responseRate: string;
   created: string;
+  description?: string;
+  lastActive?: string;
 }
+
+interface ChatbotCardProps {
+  chatbot: Chatbot;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+const ChatbotCard: React.FC<ChatbotCardProps> = ({ chatbot, isSelected, onClick }) => {
+  const getStatusColor = (status: string) => {
+    return status === 'active' ? 'text-green-600 bg-green-50' : 'text-gray-600 bg-gray-50';
+  };
+
+  return (
+    <div
+      onClick={onClick}
+      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+        isSelected ? 'bg-blue-50 border-blue-300 shadow-sm' : 'border-gray-200 hover:bg-gray-50'
+      }`}
+    >
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-medium text-lg">{chatbot.name}</h3>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${getStatusColor(chatbot.status)}`}>
+            {chatbot.status}
+          </span>
+        </div>
+        <div className="text-right text-sm text-gray-500">
+          <div className="flex items-center gap-1">
+            <MessageCircle size={14} />
+            {chatbot.interactions.toLocaleString()} interactions
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ChatbotDetails: React.FC<{ chatbot: Chatbot }> = ({ chatbot }) => {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <span>Chatbot Details</span>
+          <span className={`px-2 py-1 text-sm rounded-full ${
+            chatbot.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+          }`}>
+            {chatbot.status}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <Label className="text-gray-500">Name</Label>
+              <div className="font-medium text-lg">{chatbot.name}</div>
+            </div>
+            <div>
+              <Label className="text-gray-500">Interactions</Label>
+              <div className="font-medium flex items-center gap-2">
+                <Activity size={16} className="text-blue-500" />
+                {chatbot.interactions.toLocaleString()}
+              </div>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-gray-500">Response Rate</Label>
+              <div className="font-medium flex items-center gap-2">
+                <Power size={16} className="text-green-500" />
+                {chatbot.responseRate}
+              </div>
+            </div>
+            <div>
+              <Label className="text-gray-500">Created On</Label>
+              <div className="font-medium flex items-center gap-2">
+                <Calendar size={16} className="text-gray-500" />
+                {formatDate(chatbot.created)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const ChatbotManagement: React.FC = () => {
   const [selectedChatbot, setSelectedChatbot] = useState<Chatbot | null>(null);
@@ -20,7 +117,9 @@ const ChatbotManagement: React.FC = () => {
       status: 'active',
       interactions: 1234,
       responseRate: '95%',
-      created: '2024-03-15'
+      created: '2024-03-15',
+      description: 'Main customer support chatbot',
+      lastActive: '2024-03-22'
     },
     {
       id: 2,
@@ -28,70 +127,37 @@ const ChatbotManagement: React.FC = () => {
       status: 'inactive',
       interactions: 856,
       responseRate: '92%',
-      created: '2024-03-14'
+      created: '2024-03-14',
+      description: 'Sales and product inquiry chatbot',
+      lastActive: '2024-03-21'
     }
   ]);
 
-  const renderChatbotDetails = () => {
-    if (!selectedChatbot) return null;
-
-    return (
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Chatbot Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Name</Label>
-                <div className="font-medium">{selectedChatbot.name}</div>
-              </div>
-              <div>
-                <Label>Status</Label>
-                <div className="font-medium capitalize">{selectedChatbot.status}</div>
-              </div>
-              <div>
-                <Label>Interactions</Label>
-                <div className="font-medium">{selectedChatbot.interactions}</div>
-              </div>
-              <div>
-                <Label>Response Rate</Label>
-                <div className="font-medium">{selectedChatbot.responseRate}</div>
-              </div>
-              <div>
-                <Label>Created On</Label>
-                <div className="font-medium">{selectedChatbot.created}</div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+  const handleChatbotSelect = useCallback((chatbot: Chatbot) => {
+    setSelectedChatbot(chatbot);
+  }, []);
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="max-w-3xl mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Chatbot Management</CardTitle>
+          <CardTitle>Your Chatbots</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {chatbots.map(chatbot => (
-              <div
+              <ChatbotCard
                 key={chatbot.id}
-                onClick={() => setSelectedChatbot(chatbot)}
-                className={`p-4 border rounded-md cursor-pointer ${selectedChatbot?.id === chatbot.id ? 'bg-blue-50 border-blue-300' : 'border-gray-300 hover:bg-gray-50'}`}
-              >
-                <div className="font-medium">{chatbot.name}</div>
-                <div className="text-sm text-gray-500 capitalize">{chatbot.status}</div>
-              </div>
+                chatbot={chatbot}
+                isSelected={selectedChatbot?.id === chatbot.id}
+                onClick={() => handleChatbotSelect(chatbot)}
+              />
             ))}
           </div>
         </CardContent>
       </Card>
-      {renderChatbotDetails()}
+      
+      {selectedChatbot && <ChatbotDetails chatbot={selectedChatbot} />}
     </div>
   );
 };

@@ -9,12 +9,12 @@ export async function GET() {
     const config = await prisma.chatbot.findFirst({ where: { isDefault: true } });
 
     // Fetch the system prompt from the database
-    const systemPrompt = await prisma.systemPrompt.findFirst({ where: { isActive: true } });
+    const systemPrompt = await prisma.chatbot.findFirst({ where: { isDefault: true } });
 
     if (config) {
       return NextResponse.json({
         ...config,
-        systemPrompt: systemPrompt ? systemPrompt.prompt : "Default system prompt"
+        systemPrompt: systemPrompt ? systemPrompt.companyDescription : "Default system prompt"
       });
     }
 
@@ -23,7 +23,7 @@ export async function GET() {
       model: "gpt-3.5-turbo",
       temperature: 0.7,
       maxTokens: 800,
-      systemPrompt: systemPrompt ? systemPrompt.prompt : "Default system prompt"
+      systemPrompt: systemPrompt ? systemPrompt.companyDescription : "Default system prompt"
     });
   } catch (error) {
     console.error("[API] Error fetching chatbot config:", error);

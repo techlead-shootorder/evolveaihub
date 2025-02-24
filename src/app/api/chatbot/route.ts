@@ -6,7 +6,18 @@ const prisma = new PrismaClient();
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    
+    console.log("Request body:", body);
+
+    // Basic validation
+    if (!body.companyName || !body.botName) {
+      return NextResponse.json(
+        { error: "companyName and botName are required" },
+        { status: 400 }
+      );
+    }
+
+    const contactInfo = body.contactInfo || {};
+
     const chatbot = await prisma.chatbot.create({
       data: {
         companyName: body.companyName,
@@ -14,24 +25,28 @@ export async function POST(req: Request) {
         industry: body.industry,
         location: body.location,
         operatingHours: body.operatingHours,
-        email: body.contactInfo.email,
-        phone: body.contactInfo.phone,
-        address: body.contactInfo.address,
-        services: body.services,
+        email: contactInfo.email,
+        phone: contactInfo.phone,
+        address: contactInfo.address,
+        services: body.services, // Now accepts array of objects as Json
         pricing: body.pricing,
         serviceAreas: body.serviceAreas,
         botName: body.botName,
         welcomeMessage: body.welcomeMessage,
         fallbackMessage: body.fallbackMessage,
         personality: body.personality,
-        faqs: body.faqs,
-        policies: body.policies,
-        createdBy: body.createdBy
+        createdBy: body.createdBy || null, // Optional, from body
       },
     });
 
     return NextResponse.json(chatbot);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create chatbot", details: error }, { status: 500 });
+    console.error("Error creating chatbot:", error);
+    return NextResponse.json(
+      { error: "Failed to create chatbot", details: error },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }

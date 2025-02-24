@@ -8,37 +8,49 @@ datasource db {
 }
 
 model Chatbot {
-  id            String  @id @default(uuid())  
-  companyName   String  
-  companyDescription String
-  industry      String
-  location      String
-  operatingHours String?
-  email         String
-  phone         String?
-  address       String?
-  services      Json
-  pricing       String?
-  serviceAreas  String?
-  botName       String
-  welcomeMessage String
+  id              String   @id @default(uuid())
+  companyName     String
+  companyDescription String?
+  industry        String?
+  location        String?
+  operatingHours  String?
+  email           String?
+  phone           String?
+  address         String?
+  services        Json?    // Changed from String? to Json? for array/object support
+  pricing         String?
+  serviceAreas    String?
+  botName         String
+  welcomeMessage  String?
   fallbackMessage String?
-  personality   String
-  faqs          Json
-  policies      Json
-  createdBy     String?
-  createdAt     DateTime @default(now())
+  personality     String?
+  leads           Lead[]
+  isDefault       Boolean  @default(false)
+  createdBy       String?  // Optional, from previous fix
+  user            User?    @relation(fields: [createdBy], references: [id])
 }
 
 model User {
-  id        String  @id @default(uuid())
-  fullName String?
-  email     String  @unique
-  company String?
-  phone String?
-  password  String? 
+  id        String   @id @default(uuid())
+  fullName  String?
+  email     String   @unique
+  company   String?
+  phone     String?
+  password  String?
   createdAt DateTime @default(now())
+  chatbots  Chatbot[]
 }
 
-
-
+model Lead {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String?
+  phone     String?
+  messages  Json[]
+  status    String   @default("new")
+  source    String   @default("chatbot")
+  chatbotId String
+  chatbot   Chatbot  @relation(fields: [chatbotId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

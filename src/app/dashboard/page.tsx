@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import DashboardContent from '@/components/Dashboard/DashboardContent';
 import CreateChatbotForm from '@/components/Chatbots/CreateChatbotForm';
 import ChatbotAnalytics from '@/components/Chatbots/ChatbotAnalytics';
@@ -12,10 +11,6 @@ import IntegrationSettings from '@/components/Chatbots/IntegrationSettings';
 import ProfileSettings from '@/components/Dashboard/ProfileSettings';
 import SubscriptionManagement from '@/components/Dashboard/SubscriptionManagement';
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
-import { signOut } from "next-auth/react";
-
-import { useSession } from "next-auth/react";
-import Image from 'next/image';
 
 // SVG Icons Component
 const Icons = {
@@ -52,15 +47,11 @@ const DashboardLayout = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [chatbotCreated, setChatbotCreated] = useState(false);
-  const [userDetails, setUserDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [previewChatbotId, setPreviewChatbotId] = useState<number | null>(null); // New state for preview
   const router = useRouter();
-
-
   const { data: session, status } = useSession();
 
-
-  //  window.location.reload();
-  // Navigation Items - Move outside component or memoize if needed
   const mainNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Icons.Dashboard },
     { id: 'chatbots', label: 'My Chatbots', icon: Icons.Bot },
@@ -73,57 +64,35 @@ const DashboardLayout = () => {
     { id: 'profile', label: 'Profile Settings', icon: Icons.Dashboard },
     { id: 'subscription', label: 'Subscription', icon: Icons.Dashboard },
     { id: 'support', label: 'Support', icon: Icons.Dashboard },
-    // { id: 'logout', label: 'Logout', icon: Icons.Dashboard },
   ];
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Wait until session is loaded
       if (status === "loading") return;
-
-      // Get user data from localStorage (for manual login)
       const userData = JSON.parse(localStorage.getItem("userData") ?? "{}") as UserData;
 
-      // If neither session nor userData exists, redirect to login
       if (!userData?.id && !session) {
-        // console.log("Redirecting to login...");
         router.push("/login");
-      } 
-      else {
-        
-        if (userData?.id) { // Manual User
-          console.log("manual user", userData);
+      } else {
+        if (userData?.id) {
           setUserDetails(userData);
           setIsAuthenticated(true);
-        } 
-        else { // Google User
+        } else {
           try {
             const response = await fetch(`/api/getUser?email=${session?.user?.email}`);
             const data = await response.json();
-            if (!response.ok) {
-              throw new Error(data.error || "Something went wrong");
-            }
-        
-            console.log("google user data", data.user) // Return the user data if successful
+            if (!response.ok) throw new Error(data.error || "Something went wrong");
             localStorage.setItem("userData", JSON.stringify(data.user));
             setUserDetails(data.user);
             setIsAuthenticated(true);
-          } 
-          catch (error) {
+          } catch (error) {
             console.error("Error fetching user:", error.message);
-            return null; // Return null if an error occurs
           }
-
-          
         }
-
       }
-
-    }
+    };
     checkAuth();
-  }, [session, status]);
-
- 
+  }, [session, status, router]);
 
   const handleLogout = () => {
     signOut();
@@ -138,6 +107,11 @@ const DashboardLayout = () => {
       return;
     }
     setActivePage(itemId);
+    setPreviewChatbotId(null); // Close preview when switching pages
+  };
+
+  const handlePreviewChatbot = (botId: number) => {
+    setPreviewChatbotId(previewChatbotId === botId ? null : botId); // Toggle preview
   };
 
   const NavItem = ({ item, isBottom = false }) => (
@@ -146,10 +120,10 @@ const DashboardLayout = () => {
       className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${activePage === item.id
         ? 'bg-blue-100 text-blue-600'
         : 'text-gray-600 hover:bg-gray-100'
-        } ${isBottom ? 'mt-1' : 'mb-1'}`}
+      } ${isBottom ? 'mt-1' : 'mb-1'}`}
     >
       <item.icon />
-      {!isCollapsed && <span className={`ml-3 `}>{item.label}</span>}
+      {!isCollapsed && <span className="ml-3">{item.label}</span>}
     </button>
   );
 
@@ -162,7 +136,7 @@ const DashboardLayout = () => {
 
     const components = {
       dashboard: <DashboardContent setActivePage={setActivePage} userDetails={userDetails} />,
-      chatbots: <MyChatbots userDetails={userDetails} />,
+      chatbots: <MyChatbots userDetails={userDetails} onPreview={handlePreviewChatbot} />, // Pass callback
       create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} />,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings />,
@@ -171,44 +145,37 @@ const DashboardLayout = () => {
       support: <Support />,
     };
 
-    return components[activePage] || <DashboardContent />;
+    return components[activePage] || <DashboardContent setActivePage={setActivePage} userDetails={userDetails} />;
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
-  function capitalizeFirstLetter(str) {
+  function capitalizeFirstLetter(str: string) {
+    if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  const ProfilePicture = ({userName}) => {
-    function getInitials(name) {
+  const ProfilePicture = ({ userName }: { userName: string }) => {
+    function getInitials(name: string) {
       if (!name) return "";
-      
-      let words = name.trim().split(" ").filter(word => word.length > 0);
-      let initials = words.map(word => word.charAt(0).toUpperCase());
-      
-      return initials.join("");
-  }
+      const words = name.trim().split(" ").filter(word => word.length > 0);
+      return words.map(word => word.charAt(0).toUpperCase()).join("");
+    }
 
     return (
-      <div className='p-[18px] w-8 h-8 rounded-full bg-red-500 text-white flex justify-center items-center'>
+      <div className="p-[18px] w-8 h-8 rounded-full bg-red-500 text-white flex justify-center items-center">
         {getInitials(userName)}
       </div>
-    )
-  }
-
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-
       <aside
-        className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${isCollapsed ? 'w-16' : 'w-64'
-          } fixed h-full`}
+        className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${isCollapsed ? 'w-16' : 'w-64'} fixed h-full`}
       >
         <div className="h-16 border-b flex items-center justify-between px-4">
-          {!isCollapsed && <span className="text-xl font-bold">EvolveAI</span>}
+          {!isCollapsed && <span className="text-xl font-bold">ChatLX</span>}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -231,7 +198,6 @@ const DashboardLayout = () => {
               <NavItem key={item.id} item={item} />
             ))}
           </div>
-
           <div className="border-t pt-4">
             {bottomNavItems.map((item) => (
               <NavItem key={item.id} item={item} isBottom />
@@ -247,29 +213,34 @@ const DashboardLayout = () => {
         <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 z-10 flex items-center justify-between px-6" style={{ marginLeft: isCollapsed ? '4rem' : '16rem' }}>
           <h1 className="text-xl font-semibold text-gray-800 flex justify-between w-full">
             {mainNavItems.concat(bottomNavItems).find(item => item.id === activePage)?.label || 'Dashboard'}
-            <div className='flex items-center gap-2'>
-               <ProfilePicture userName={userDetails.fullName}/>
-              <p className='text-black text-[16px]'>
+            <div className="flex items-center gap-2">
+              <ProfilePicture userName={userDetails.fullName} />
+              <p className="text-black text-[16px]">
                 {capitalizeFirstLetter(userDetails?.fullName)}
               </p>
             </div>
           </h1>
         </header>
 
-        <main className="p-6 mt-16">
+        <main className="p-6 mt-16 relative">
           {renderComponent()}
-
-          {/* <button onClick={() => {
-            setIsAuthenticated(false);
-            signOut()
-          }} className="bg-red-500 text-white px-4 py-2 rounded">
-            Logout
-          </button> */}
-          <div>
-
-          </div>
+          {previewChatbotId && (
+            <div className="fixed bottom-0 right-0 w-96 bg-white shadow-lg rounded-t-lg p-4 animate-in slide-in-from-bottom-10 duration-300 z-20">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold">Chatbot Preview</h3>
+                <button
+                  onClick={() => setPreviewChatbotId(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <path d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <ChatbotPreview botId={previewChatbotId} />
+            </div>
+          )}
         </main>
-
       </div>
     </div>
   );

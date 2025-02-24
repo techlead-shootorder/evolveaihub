@@ -3,100 +3,154 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+interface LeadInfo {
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
+function createLeadCaptureSystemMessage(config: any, leadInfo: LeadInfo) {
+  const missingInfo = [];
+  if (!leadInfo.name) missingInfo.push("name");
+  if (!leadInfo.email) missingInfo.push("email");
+  if (!leadInfo.phone) missingInfo.push("phone");
+
+  if (missingInfo.length === 0) {
+    return `You are ${config.botName}, an AI sales agent for ${config.companyName}. 
+      All info collected—focus on answering questions and suggesting next steps (e.g., "Would you like a demo?").`;
+  }
+
+  return `You are ${config.botName}, a helpful AI assistant for ${config.companyName}. 
+    Your current priority is to collect customer information naturally in conversation.
+    Missing info: ${missingInfo.join(", ")}
+    Guidelines:
+    1. Be conversational—don’t demand info directly.
+    2. Collect one piece at a time, starting with ${missingInfo[0]}.
+    3. Answer questions while weaving in requests.
+    4. Use personality: ${config.personality || "professional"}
+    Current info:
+    ${leadInfo.name ? `Name: ${leadInfo.name}` : ""}
+    ${leadInfo.email ? `Email: ${leadInfo.email}` : ""}
+    ${leadInfo.phone ? `Phone: ${leadInfo.phone}` : ""}
+  `;
+}
+
+function extractLeadInfo(message: string): Partial<LeadInfo> {
+  const info: Partial<LeadInfo> = {};
+  const emailRegex = /[\w.-]+@[\w.-]+\.\w+/;
+  const phoneRegex = /(\+\d{1,3}[-.]?)?\d{3}[-.]?\d{3}[-.]?\d{4}/;
+  const nameRegex = /(?:my name is|i am|i'm) ([A-Za-z\s]+)/i;
+
+  if (emailRegex.test(message)) info.email = message.match(emailRegex)![0];
+  if (phoneRegex.test(message)) info.phone = message.match(phoneRegex)![0];
+  if (nameRegex.test(message)) info.name = message.match(nameRegex)![1].trim();
+
+  return info;
+}
+
 export async function POST(req: Request) {
-  console.log('[OpenAI API] Received request, method:', req.method);
-  console.log('API Key:', process.env.OPENAI_API_KEY);
-
   try {
-    const { messages } = await req.json();
-    console.log('[OpenAI API] Received messages array length:', messages?.length || 0);
+    console.log("[OpenAI API] Received request");
 
-    if (!messages || !Array.isArray(messages)) {
-      console.error('[OpenAI API] Invalid request body:', messages);
-      return NextResponse.json({ error: 'Invalid request body. "messages" array is required.' }, { status: 400 });
+    const requestBody = await req.json();
+    console.log("Request body:", requestBody); // Log incoming data
+
+    const { messages, leadId, id } = requestBody;
+
+    if (!messages || !Array.isArray(messages) || !id) {
+      console.error("Validation failed: messages or id missing");
+      return NextResponse.json(
+        { error: '"messages" array and "id" are required.' },
+        { status: 400 }
+      );
     }
 
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     if (!OPENAI_API_KEY) {
-      console.error('[OpenAI API] Missing API key in environment');
-      throw new Error('OPENAI_API_KEY environment variable is not set');
+      console.error("Missing OpenAI API Key");
+      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
-    // Fetch the system prompt from the database
-    const systemPrompt = await prisma.systemPrompt.findFirst({ where: { isActive: true } });
+    const chatbotConfig = await prisma.chatbot.findUnique({ where: { id: id } });
+    if (!chatbotConfig) {
+      console.error("Chatbot not found for id:", id);
+      return NextResponse.json({ error: "Chatbot not found" }, { status: 404 });
+    }
 
-    console.log('[OpenAI API] Preparing request to OpenAI service');
-    const requestBody = {
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: systemPrompt ? systemPrompt.prompt : "Default system prompt" },
-        ...messages
-      ],
-      temperature: 0.7,
-      max_tokens: 800
+    let lead = leadId ? await prisma.lead.findUnique({ where: { id: leadId } }) : null;
+    const latestMessage = messages[messages.length - 1]?.content || "";
+    const newLeadInfo = extractLeadInfo(latestMessage);
+
+    if (lead) {
+      const updatedLeadInfo = {
+        name: newLeadInfo.name || lead.name,
+        email: newLeadInfo.email || lead.email,
+        phone: newLeadInfo.phone || lead.phone,
+      };
+      lead = await prisma.lead.update({
+        where: { id: leadId },
+        data: {
+          name: updatedLeadInfo.name,
+          email: updatedLeadInfo.email,
+          phone: updatedLeadInfo.phone,
+          messages: [...(lead.messages as any[]), messages[messages.length - 1]],
+          chatbotId: id,
+        },
+      });
+    } else {
+      lead = await prisma.lead.create({
+        data: {
+          name: newLeadInfo.name,
+          email: newLeadInfo.email,
+          phone: newLeadInfo.phone,
+          messages: [messages[messages.length - 1]],
+          chatbotId: id,
+        },
+      });
+    }
+
+    const currentLeadInfo = {
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
     };
-    console.log('[OpenAI API] Request configuration:', {
-      model: requestBody.model,
-      messagesCount: requestBody.messages.length,
-      temperature: requestBody.temperature,
-      max_tokens: requestBody.max_tokens
-    });
 
-    console.log('[OpenAI API] Sending request to OpenAI');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    const systemMessage = createLeadCaptureSystemMessage(chatbotConfig, currentLeadInfo);
+
+    const openAiRequestBody = {
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "system", content: systemMessage }, ...messages],
+      temperature: 0.7,
+      max_tokens: 800,
+    };
+
+    console.log("[OpenAI API] Sending request to OpenAI", openAiRequestBody);
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(openAiRequestBody),
     });
-
-    console.log('[OpenAI API] Received response from OpenAI, status:', response.status);
 
     if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-        console.error('[OpenAI API] Error response from OpenAI:', errorData);
-      } catch (e) {
-        console.error('[OpenAI API] Failed to parse error response as JSON');
-        errorData = { message: 'Could not parse error response' };
-      }
-
-      console.error(
-        '[OpenAI API] OpenAI API error:',
-        response.status,
-        response.statusText,
-        errorData
-      );
-
-      return NextResponse.json({
-        error: 'Error from OpenAI API',
-        status: response.status,
-        statusText: response.statusText,
-        details: errorData
-      }, { status: response.status });
+      const errorText = await response.text();
+      console.error("[OpenAI API] Error response:", errorText);
+      return NextResponse.json({ error: "OpenAI API error", details: errorText }, { status: response.status });
     }
 
     const data = await response.json();
-    console.log('[OpenAI API] Successfully received and parsed response from OpenAI');
+    return NextResponse.json({ ...data, leadId: lead.id });
 
-    console.log('[OpenAI API] Response metadata:', {
-      id: data.id,
-      model: data.model,
-      choicesCount: data.choices?.length,
-      promptTokens: data.usage?.prompt_tokens,
-      completionTokens: data.usage?.completion_tokens,
-      totalTokens: data.usage?.total_tokens
-    });
-
-    return NextResponse.json(data);
   } catch (error) {
-    console.error('[OpenAI API] Unexpected error:', error);
-    return NextResponse.json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    console.error("[OpenAI API] Unexpected error:", error);
+    return NextResponse.json(
+      { error: "Internal server error", message: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }

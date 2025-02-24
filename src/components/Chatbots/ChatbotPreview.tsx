@@ -1,164 +1,72 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const ChatbotPreview = () => {
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  
+interface MyChatbotsProps {
+  userDetails: any;
+  onPreview: (botId: string) => void; // Changed to string
+}
+
+function MyChatbots({ userDetails, onPreview }: MyChatbotsProps) {
+  const [chatbotData, setChatbotData] = useState<any[]>([]);
+
   useEffect(() => {
-    // Add initial welcome message when component mounts
-    const fetchChatbotConfig = async () => {
-      console.log('[Chatbot] Fetching chatbot configuration...');
+    const fetchChatbot = async () => {
       try {
-        const response = await fetch('/api/chatbot/config');
-        console.log('[Chatbot] Config response status:', response.status);
-        
-        if (response.ok) {
-          const config = await response.json();
-          console.log('[Chatbot] Received config:', config);
-          
-          if (config.welcomeMessage) {
-            console.log('[Chatbot] Setting welcome message:', config.welcomeMessage);
-            setMessages([{ role: 'assistant', content: config.welcomeMessage }]);
-          } else {
-            console.log('[Chatbot] No welcome message in config, using default');
-            setMessages([{ role: 'assistant', content: 'Hello! How can I help you today?' }]);
-          }
-        } else {
-          console.warn('[Chatbot] Failed to fetch config, status:', response.status);
-          // Fallback welcome message
-          setMessages([{ role: 'assistant', content: 'Hello! How can I help you today?' }]);
-        }
+        const res = await fetch(`/api/getChatbot?id=${userDetails.id}`);
+        const data = await res.json();
+        setChatbotData(data);
       } catch (error) {
-        console.error('[Chatbot] Error fetching chatbot config:', error);
-        // Fallback welcome message
-        setMessages([{ role: 'assistant', content: 'Hello! How can I help you today?' }]);
+        console.log("Error fetching chatbot:", error);
       }
     };
-    
-    fetchChatbotConfig();
-  }, []);
-  
-  useEffect(() => {
-    console.log('[Chatbot] Messages updated, scrolling to bottom');
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-  
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) {
-      console.log('[Chatbot] Send blocked - input empty or loading in progress');
-      return;
-    }
-   
-    const userMessage = { role: 'user', content: input };
-    console.log('[Chatbot] Adding user message:', userMessage);
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-    
-    try {
-      console.log('[Chatbot] Preparing request to OpenAI API');
-      const allMessages = [...messages, userMessage];
-      console.log('[Chatbot] Full message history being sent:', allMessages);
-      
-      // Send message to OpenAI API endpoint
-      console.log('[Chatbot] Sending request to /api/chatbot/openai');
-      const response = await fetch('/api/chatbot/openai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          messages: allMessages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
-        }),
-      });
-      
-      console.log('[Chatbot] Received response, status:', response.status);
-      
-      if (!response.ok) {
-        console.error('[Chatbot] OpenAI API error response:', response.status, response.statusText);
-        throw new Error('OpenAI API response error: ' + response.statusText);
-      }
-      
-      const data = await response.json();
-      console.log('[Chatbot] Parsed response data:', data);
-      
-      if (data.choices && data.choices[0] && data.choices[0].message) {
-        const botResponse = data.choices[0].message.content;
-        console.log('[Chatbot] Extracted bot response:', botResponse);
-        setMessages((prev) => [...prev, { role: 'assistant', content: botResponse }]);
-      } else {
-        console.error('[Chatbot] Invalid response format:', data);
-        throw new Error('Invalid response format from OpenAI API');
-      }
-    } catch (error) {
-      console.error('[Chatbot] Error in OpenAI chat flow:', error);
-      setMessages((prev) => [...prev, { 
-        role: 'assistant', 
-        content: 'Sorry, I encountered an error processing your request. Please try again later.' 
-      }]);
-    } finally {
-      console.log('[Chatbot] Request complete, resetting loading state');
-      setIsLoading(false);
+    fetchChatbot();
+  }, [userDetails.id]);
+
+  const handleDelete = (botId: string) => {
+    if (window.confirm('Are you sure you want to delete this chatbot?')) {
+      console.log('Deleting bot:', botId);
     }
   };
-  
+
   return (
-    <div className="max-w-md mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-      <div className="h-64 overflow-y-auto p-4">
-        <div className="space-y-3">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded-lg max-w-xs ${
-                msg.role === 'user' 
-                  ? 'bg-blue-500 text-white ml-auto' 
-                  : 'bg-gray-200 mr-auto'
-              }`}
-            >
-              {msg.content}
-            </div>
-          ))}
-          {isLoading && (
-            <div className="bg-gray-200 p-3 rounded-lg max-w-xs mr-auto">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">My Chatbots</h1>
+        <a href="/dashboard/create" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Create New Chatbot
+        </a>
       </div>
-      <div className="border-t p-3">
-        <div className="flex">
-          <input
-            type="text"
-            className="flex-1 border rounded-l-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="Type a message..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            disabled={isLoading}
-          />
-          <button 
-            className={`p-2 rounded-r-lg transition-colors ${
-              isLoading || !input.trim() 
-                ? 'bg-blue-300 cursor-not-allowed' 
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-            onClick={sendMessage}
-            disabled={isLoading || !input.trim()}
-          >
-            Send
-          </button>
-        </div>
+      <Alert><AlertDescription>Tip: Keep your chatbots active.</AlertDescription></Alert>
+      <div className="grid gap-6">
+        {chatbotData.length > 0 ? (
+          chatbotData.map((bot) => (
+            <Card key={bot.id}>
+              <CardContent className="p-6">
+                <div className="grid md:grid-cols-4 gap-6">
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-semibold">{bot.botName}</h3>
+                    <p className="text-sm text-gray-500">{bot.companyDescription}</p>
+                  </div>
+                  <div className="flex md:flex-col justify-end space-y-2">
+                    <button onClick={() => onPreview(bot.id)} className="w-full px-3 py-2 bg-green-50 text-green-600 rounded-md">
+                      Preview
+                    </button>
+                    <button className="w-full px-3 py-2 bg-blue-50 text-blue-600 rounded-md">Edit</button>
+                    <button onClick={() => handleDelete(bot.id)} className="w-full px-3 py-2 bg-red-50 text-red-600 rounded-md">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div>No chatbots yet.</div>
+        )}
       </div>
     </div>
   );
-};
+}
 
-export default ChatbotPreview;
+export default MyChatbots;

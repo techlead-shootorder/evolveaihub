@@ -4,16 +4,15 @@ import { Input } from "@/components/ui/input";
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
 import LoadingSpinner from '../LoadingSpinner';
 
-function CreateChatbotForm({ onCreate, userDetails, showPreview, setShowPreview }) {
+function CreateChatbotForm({ onCreate, userDetails, showPreview, setShowPreview, createdChatBotData, setCreatedChatBotData }) {
   const [step, setStep] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [errors, setErrors] = useState({});
   // const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [createdChatBotData, setCreatedChatBotData] = useState('');
+ 
   const [formData, setFormData] = useState({
     // Company Information
-
     companyName: '',
     companyDescription: '',
     industry: '',
@@ -335,41 +334,41 @@ function CreateChatbotForm({ onCreate, userDetails, showPreview, setShowPreview 
     }
   };
 
-  if (showPreview) {
-    console.log("testing id", createdChatBotData.id);
-    return (
-      <div className="max-w-2xl mx-auto p-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Your Chatbot: {formData.botName}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-gray-600">Your chatbot has been created successfully! You can test it below.</p>
-            <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id} />
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <button
-              type="button"
-              onClick={() => setShowPreview(false)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900"
-            >
-              Back to Editor
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              onClick={() => {
-                // Navigate to dashboard or chatbots page
-                if (onCreate) onCreate();
-              }}
-            >
-              Go to Dashboard
-            </button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
+  // if (true) {
+  //   console.log("testing id", createdChatBotData.id);
+  //   return (
+  //     <div className="max-w-2xl mx-auto p-4">
+  //       <Card>
+  //         <CardHeader>
+  //           <CardTitle>Test Your Chatbot: {formData.botName}</CardTitle>
+  //         </CardHeader>
+  //         <CardContent>
+  //           <p className="mb-4 text-gray-600">Your chatbot has been created successfully! You can test it below.</p>
+  //           {/* <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id} /> */}
+  //         </CardContent>
+  //         <CardFooter className="flex justify-between">
+  //           <button
+  //             type="button"
+  //             onClick={() => setShowPreview(false)}
+  //             className="px-4 py-2 text-gray-600 hover:text-gray-900"
+  //           >
+  //             Back to Editor
+  //           </button>
+  //           <button
+  //             type="button"
+  //             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+  //             onClick={() => {
+  //               // Navigate to dashboard or chatbots page
+  //               if (onCreate) onCreate();
+  //             }}
+  //           >
+  //             Go to Dashboard
+  //           </button>
+  //         </CardFooter>
+  //       </Card>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="max-w-2xl mx-auto p-4">

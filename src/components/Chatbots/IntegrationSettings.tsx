@@ -1,22 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 
-function IntegrationSettings() {
+function IntegrationSettings({ userDetails, chatbotData }) {
   const [selectedBot, setSelectedBot] = useState(null);
   const [customization, setCustomization] = useState({
     primaryColor: '#3b82f6',
+    secondaryColor: '',
     position: 'right',
     initialMessage: 'Hello! How can I help you today?',
-    botName: 'AI Assistant'
+    botName: 'AI Assistant',
+    pills: [] // Initialize as an array
   });
-  
-  // Mock chatbot data
-  const chatbots = [
-    { id: 1, name: "Customer Support Bot" },
-    { id: 2, name: "Sales Assistant" }
-  ];
+
+  // Update customization when a bot is selected
+  useEffect(() => {
+    if (selectedBot) {
+      // Merge default customization with bot-specific settings if they exist
+      setCustomization(prev => ({
+        ...prev,
+        primaryColor: selectedBot.primaryColor || prev.primaryColor,
+        position: selectedBot.position || prev.position,
+        initialMessage: selectedBot.initialMessage || prev.initialMessage,
+        botName: selectedBot.botName || prev.botName
+      }));
+    }
+  }, [selectedBot]);
+
+  const addPill = () => {
+    setCustomization(prev => ({
+      ...prev,
+      pills: [...(prev.pills || []), ''] // Add a new empty pill
+    }));
+  };
+
+  const updatePill = (index, value) => {
+    setCustomization(prev => {
+      const updatedPills = [...prev.pills];
+      updatedPills[index] = value;
+      return { ...prev, pills: updatedPills };
+    });
+  };
 
   // Generate code snippets based on customization
   const generateHTMLSnippet = () => {
@@ -47,7 +72,14 @@ function App() {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    // You could add a toast notification here
+  };
+
+  const handleBotSelect = (e) => {
+    const selectedId = e.target.value
+
+    const selected = chatbotData?.find(bot => bot.id == selectedId);
+    console.log("selected bot", selected)
+    setSelectedBot(selected);
   };
 
   return (
@@ -66,12 +98,12 @@ function App() {
         <CardContent>
           <select
             value={selectedBot?.id || ''}
-            onChange={(e) => setSelectedBot(chatbots.find(bot => bot.id === Number(e.target.value)))}
+            onChange={handleBotSelect}
             className="w-full p-2 border rounded-md"
           >
             <option value="">Select a chatbot</option>
-            {chatbots.map(bot => (
-              <option key={bot.id} value={bot.id}>{bot.name}</option>
+            {chatbotData?.map(bot => (
+              <option key={bot.id} value={bot.id}>{bot.botName}</option>
             ))}
           </select>
         </CardContent>
@@ -105,6 +137,32 @@ function App() {
                     onChange={(e) => setCustomization(prev => ({
                       ...prev,
                       primaryColor: e.target.value
+                    }))}
+                    className="w-32"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Secondary Color
+                </label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    type="color"
+                    value={customization.secondaryColor}
+                    onChange={(e) => setCustomization(prev => ({
+                      ...prev,
+                      secondaryColor: e.target.value
+                    }))}
+                    className="w-16 h-8"
+                  />
+                  <Input
+                    type="text"
+                    value={customization.secondaryColor}
+                    onChange={(e) => setCustomization(prev => ({
+                      ...prev,
+                      secondaryColor: e.target.value
                     }))}
                     className="w-32"
                   />
@@ -155,6 +213,28 @@ function App() {
                   placeholder="Enter initial message"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  1st Pill
+                </label>
+                {customization.pills.map((pill, index) => (
+                  <Input
+                    key={index}
+                    value={pill}
+                    onChange={(e) => updatePill(index, e.target.value)}
+                    placeholder={`Pill ${index + 1}`}
+                    className="w-full mb-2"
+                  />
+                ))}
+                <button
+                  type="button"
+                  onClick={addPill}
+                  className="mt-2 p-2 bg-blue-500 text-white rounded"
+                >
+                  Add Pill
+                </button>
+              </div>
             </CardContent>
           </Card>
 
@@ -176,8 +256,8 @@ function App() {
                     className="absolute top-2 right-2 p-2 bg-white rounded-md border shadow-sm hover:bg-gray-50"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
                     </svg>
                   </button>
                 </div>
@@ -198,8 +278,8 @@ function App() {
                     className="absolute top-2 right-2 p-2 bg-white rounded-md border shadow-sm hover:bg-gray-50"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
                     </svg>
                   </button>
                 </div>
@@ -250,7 +330,7 @@ function App() {
             </CardContent>
           </Card>
 
-          {/* Advanced Settings */}
+          {/* Advanced Settings Alert */}
           <Alert className="bg-yellow-50 border-yellow-200">
             <AlertDescription className="text-yellow-800">
               Need more customization options? Check out our <a href="/docs" className="underline">advanced integration guide</a> for custom styling, events, and callbacks.

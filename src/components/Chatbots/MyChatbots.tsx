@@ -5,26 +5,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 interface MyChatbotsProps {
   userDetails: any;
   onPreview: (botId: number) => void; // Add callback prop
+  chatbotData: any;
 }
 
-function MyChatbots({ userDetails, onPreview }: MyChatbotsProps) {
-  const [chatbotData, setChatbotData] = useState<any[]>([]);
+function MyChatbots({ userDetails, onPreview, chatbotData }: MyChatbotsProps) {
 
-  useEffect(() => {
-    console.log("userDetails in mychatbot", userDetails)
-    const fetchChatbot = async () => {
-      try {
-
-        const res = await fetch(`/api/getChatbot?id=${userDetails?.id}`);
-        const data = await res.json();
-        console.log("chatbot data", data);
-        setChatbotData(data);
-      } catch (error) {
-        console.log("Error fetching chatbot:", error);
-      }
-    };
-    fetchChatbot();
-  }, [userDetails]);
 
   const handleDelete = (botId: number) => {
     if (window.confirm('Are you sure you want to delete this chatbot?')) {

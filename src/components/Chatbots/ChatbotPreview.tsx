@@ -7,7 +7,7 @@ interface ChatbotPreviewProps {
 }
 
 const ChatbotPreview: React.FC<ChatbotPreviewProps> = ({userDetails, botId }) => {
-  console.log("testing botid", botId)
+  // console.log("testing botid", botId)
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

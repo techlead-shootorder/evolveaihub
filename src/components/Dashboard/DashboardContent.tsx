@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 //   DropdownMenuTrigger,
 // } from "@/components/ui/dropdown-menu";
 
-const DashboardContent = ({setActivePage, userDetails}) => {
+const DashboardContent = ({setActivePage, userDetails, chatbotData}) => {
   // Mock data for chatbots
   const [chatbots] = useState([
     {
@@ -51,22 +51,7 @@ const DashboardContent = ({setActivePage, userDetails}) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [chatbotData, setChatBotData] = useState(null);
 
-  useEffect(() => {
-    const fetchChatbot = async () => {
-      try {
-        const res = await fetch(`/api/getChatbot?id=${userDetails.id}`);
-        const data = await res.json();
-        console.log("chatbot data", data)
-        setChatBotData(data);
-      } catch (error) {
-        console.log("Error fetching chatbot:", error);
-      }
-    };
-
-    fetchChatbot(); // Call the async function inside useEffect
-  }, []);
 
   const filteredBots = chatbots.filter(bot => {
     const matchesSearch = bot.name.toLowerCase().includes(searchQuery.toLowerCase());

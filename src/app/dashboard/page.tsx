@@ -47,9 +47,11 @@ const DashboardLayout = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [chatbotCreated, setChatbotCreated] = useState(false);
+   const [createdChatBotData, setCreatedChatBotData] = useState('');
   const [userDetails, setUserDetails] = useState<any>(null);
   const [previewChatbotId, setPreviewChatbotId] = useState<number | null>(null); // New state for preview
    const [showPreview, setShowPreview] = useState(false);
+    const [chatbotData, setChatBotData] = useState(null);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -95,6 +97,23 @@ const DashboardLayout = () => {
     checkAuth();
   }, [session, status, router]);
 
+    useEffect(() => {
+        const fetchChatbot = async () => {
+          try {
+            const res = await fetch(`/api/getChatbot?id=${userDetails?.id}`);
+            const data = await res.json();
+            console.log("chatbot data", data)
+            setChatBotData(data);
+          } catch (error) {
+            console.log("Error fetching chatbot:", error);
+          }
+        };
+      if(userDetails){
+
+        fetchChatbot(); // Call the async function inside useEffect
+      }
+      }, [userDetails]);
+
   const handleLogout = () => {
     signOut();
     setIsAuthenticated(false);
@@ -118,7 +137,8 @@ const DashboardLayout = () => {
   const NavItem = ({ item, isBottom = false }) => (
     <button
       onClick={() => {
-        setShowPreview(false);
+        console.log("triggered");
+        setChatbotCreated(false);
         handleNavigation(item.id)
       }}
       className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${activePage === item.id
@@ -135,15 +155,15 @@ const DashboardLayout = () => {
     if (!isAuthenticated) return null;
 
     if (chatbotCreated) {
-      return <ChatbotPreview userDetails={userDetails}/>;
+      return <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id}/>;
     }
 
     const components = {
-      dashboard: <DashboardContent setActivePage={setActivePage} userDetails={userDetails} />,
-      chatbots: <MyChatbots userDetails={userDetails} onPreview={handlePreviewChatbot} />, // Pass callback
-      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} showPreview={showPreview} setShowPreview={setShowPreview}/>,
+      dashboard: <DashboardContent setActivePage={setActivePage} userDetails={userDetails} chatbotData={chatbotData} />,
+      chatbots: <MyChatbots userDetails={userDetails} onPreview={handlePreviewChatbot} chatbotData={chatbotData} />, // Pass callback
+      create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} showPreview={showPreview} setShowPreview={setShowPreview} createdChatBotData={createdChatBotData} setCreatedChatBotData={setCreatedChatBotData} />,
       analytics: <ChatbotAnalytics />,
-      integration: <IntegrationSettings />,
+      integration: <IntegrationSettings userDetails={userDetails} chatbotData={chatbotData} />,
       profile: <ProfileSettings userDetails={userDetails} />,
       subscription: <SubscriptionManagement />,
       support: <Support />,

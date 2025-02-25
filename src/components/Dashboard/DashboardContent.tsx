@@ -51,7 +51,7 @@ const DashboardContent = ({setActivePage, userDetails, chatbotData}) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-
+  const [bots, setBots] = useState(chatbotData);
 
   const filteredBots = chatbots.filter(bot => {
     const matchesSearch = bot.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -64,6 +64,11 @@ const DashboardContent = ({setActivePage, userDetails, chatbotData}) => {
     return status ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
 
   };
+
+  const getActiveBotsCount = (chatbotData)=> {
+    const activeBots = chatbotData?.filter(item => item.isDefault);
+    return activeBots?.length;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,7 +116,7 @@ const DashboardContent = ({setActivePage, userDetails, chatbotData}) => {
             <CardContent>
               <div className="text-2xl font-bold">
                 {/* {chatbots.filter(bot => bot.status === 'active').length} */}
-                {chatbotData && chatbotData?.length}
+                {getActiveBotsCount(chatbotData)}
               </div>
             </CardContent>
           </Card>

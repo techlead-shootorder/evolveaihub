@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 function IntegrationSettings({ userDetails, chatbotData }) {
   const [selectedBot, setSelectedBot] = useState(null);
   const [customization, setCustomization] = useState({
+    domain: '',
     primaryColor: '#3b82f6',
     secondaryColor: '',
     position: 'right',
     initialMessage: 'Hello! How can I help you today?',
     botName: 'AI Assistant',
-    pills: [] // Initialize as an array
+    pills: [], // Initialize as an array
+    logo: null
   });
 
   // Update customization when a bot is selected
@@ -82,6 +84,27 @@ function App() {
     setSelectedBot(selected);
   };
 
+  const handleUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCustomization(prev => ({
+          ...prev,
+          logo: reader.result, // Save base64 string of image
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemove = () => {
+    setCustomization(prev => ({
+      ...prev,
+      logo: null,
+    }));
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -89,6 +112,50 @@ function App() {
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Integration Settings</h1>
         <p className="text-gray-600">Configure and integrate your chatbots across different platforms</p>
       </div>
+
+      {/* DNS Record */}
+      <Card>
+        <CardHeader>
+          <CardTitle>DNS Record</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border border-gray-300 shadow-lg">
+              <thead>
+                <tr className="bg-gray-200 text-left">
+                  <th className="px-4 py-2 border">Type</th>
+                  <th className="px-4 py-2 border">Name</th>
+                  <th className="px-4 py-2 border">TTL</th>
+                  <th className="px-4 py-2 border">Current Value</th>
+                  <th className="px-4 py-2 border">New Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border">
+                  <td className="px-4 py-2 border">A</td>
+                  <td className="px-4 py-2 border">@</td>
+                  <td className="px-4 py-2 border">60 mins</td>
+                  <td className="px-4 py-2 border">76.223.105.230</td>
+                  <td className="px-4 py-2 border">23.227.38.65</td>
+                </tr>
+                <tr className="border">
+                  <td className="px-4 py-2 border">CNAME</td>
+                  <td className="px-4 py-2 border">
+                    <input
+                      type="text"
+                      placeholder="Enter Name"
+                      className="px-2 py-1 border rounded-md w-full"
+                    />
+                  </td>
+                  <td className="px-4 py-2 border">60 mins</td>
+                  <td className="px-4 py-2 border">chatlx.com</td>
+                  <td className="px-4 py-2 border">shops.chatlx.com</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Select Chatbot */}
       <Card>
@@ -117,6 +184,57 @@ function App() {
               <CardTitle>Customize Appearance</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              
+              {/* Domain */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Domain
+                </label>
+                <Input
+                  value={customization.domain}
+                  onChange={(e) => setCustomization(prev => ({
+                    ...prev,
+                    domain: e.target.value
+                  }))}
+                  placeholder="example.com"
+                />
+              </div>
+
+              {/* Upload Logo Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Upload Logo
+                </label>
+                {!customization.logo ? (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUpload}
+                      className="hidden"
+                      id="logoUpload"
+                    />
+                    <label
+                      htmlFor="logoUpload"
+                      className="cursor-pointer p-2 bg-blue-500 text-white rounded-md"
+                    >
+                      Upload
+                    </label>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-4">
+                    <img src={customization.logo} alt="Logo" className="w-16 h-16 object-cover rounded-md border" />
+                    <button
+                      onClick={handleRemove}
+                      className="p-2 bg-red-500 text-white rounded-md"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+
+             {/* Primary Color */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Primary Color
@@ -143,6 +261,7 @@ function App() {
                 </div>
               </div>
 
+             {/* Secondary Color */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Secondary Color

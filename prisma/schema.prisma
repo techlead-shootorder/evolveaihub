@@ -8,36 +8,37 @@ datasource db {
 }
 
 model Chatbot {
-  id              String   @id @default(uuid())
-  companyName     String
+  id                 String        @id @default(uuid())
+  companyName        String
   companyDescription String?
-  industry        String?
-  location        String?
-  operatingHours  String?
-  email           String?
-  phone           String?
-  address         String?
-  services        Json?    // Changed from String? to Json? for array/object support
-  pricing         String?
-  serviceAreas    String?
-  botName         String
-  welcomeMessage  String?
-  fallbackMessage String?
-  personality     String?
-  leads           Lead[]
-  isDefault       Boolean  @default(false)
-  createdBy       String?  // Optional, from previous fix
-  user            User?    @relation(fields: [createdBy], references: [id])
+  industry           String?
+  location           String?
+  operatingHours     String?
+  email              String?
+  phone              String?
+  address            String?
+  services           Json? // Changed from String? to Json? for array/object support
+  pricing            String?
+  serviceAreas       String?
+  botName            String
+  welcomeMessage     String?
+  fallbackMessage    String?
+  personality        String?
+  leads              Lead[]
+  isDefault          Boolean       @default(false)
+  createdBy          String? // Optional, from previous fix
+  user               User?         @relation(fields: [createdBy], references: [id])
+  integrations       Integration[]
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   fullName  String?
-  email     String   @unique
+  email     String    @unique
   company   String?
   phone     String?
   password  String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   chatbots  Chatbot[]
 }
 
@@ -53,4 +54,16 @@ model Lead {
   chatbot   Chatbot  @relation(fields: [chatbotId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Integration {
+  id           String  @id @default(uuid())
+  logo         String?
+  primaryColor String?
+  buttonColor  String?
+  chatbotId    String // ✅ Ensure this is defined
+  chatbot      Chatbot @relation(fields: [chatbotId], references: [id])
+  domain       String?
+  pills        Json?
+  subText      String?
 }

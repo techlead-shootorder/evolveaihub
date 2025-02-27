@@ -6,15 +6,44 @@ import { Input } from "@/components/ui/input";
 function IntegrationSettings({ userDetails, chatbotData }) {
   const [selectedBot, setSelectedBot] = useState(null);
   const [customization, setCustomization] = useState({
-    domain: '',
-    primaryColor: '#3b82f6',
+    id: '',
+    logo: null,
+    primaryColor: '',
     secondaryColor: '',
-    position: 'right',
-    initialMessage: 'Hello! How can I help you today?',
-    botName: 'AI Assistant',
+    chatbotId: '',
+    domain: '',
     pills: [], // Initialize as an array
-    logo: null
+    initialMessage: 'Hello! How can I help you today?',
+    subText: '',
+    phone: '',
   });
+  const [integrationData, setIntegrationData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoToBeRemoved, setLogoToBeRemoved] = useState(false);
+
+  // LocalStorage key for the logos array
+  const STORAGE_KEY = 'chatbot_logos';
+
+  // Helper functions for localStorage operations with array of objects
+  const getLogosFromStorage = () => {
+    try {
+      const logosString = localStorage.getItem(STORAGE_KEY);
+      return logosString ? JSON.parse(logosString) : [];
+    } catch (error) {
+      console.error('Error parsing logos from localStorage:', error);
+      return [];
+    }
+  };
+
+  const saveLogosToStorage = (logosArray) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(logosArray));
+    } catch (error) {
+      console.error('Error saving logos to localStorage:', error);
+    }
+  };
 
   // Update customization when a bot is selected
   useEffect(() => {
@@ -77,22 +106,107 @@ function App() {
   };
 
   const handleBotSelect = (e) => {
-    const selectedId = e.target.value
-
+    const selectedId = e.target.value;
     const selected = chatbotData?.find(bot => bot.id == selectedId);
-    console.log("selected bot", selected)
+    console.log("selected bot", selected);
     setSelectedBot(selected);
+    setCustomization((prev) => {
+      return {
+        ...prev,
+        chatbotId: selectedId
+      }
+    });
+    
+    // Reset logo removal flag when changing bots
+    setLogoToBeRemoved(false);
   };
 
+  // Get logo for a specific chatbot from localStorage array
+  const getLogoByChatbotId = (chatbotId) => {
+    if (!chatbotId) return null;
+    
+    const logos = getLogosFromStorage();
+    const logoEntry = logos.find(item => item.chatbotId === chatbotId);
+    return logoEntry ? logoEntry.imagePath : null;
+  };
+
+  // Save logo to localStorage array
+  const saveLogoToLocalStorage = async () => {
+    if (!logoFile || !selectedBot?.id) return null;
+    
+    return new Promise((resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const logoData = reader.result;
+          
+          // Get current logos array
+          const logos = getLogosFromStorage();
+          
+          // Check if there's already a logo for this chatbot
+          const existingIndex = logos.findIndex(item => item.chatbotId === selectedBot.id);
+          
+          if (existingIndex >= 0) {
+            // Update existing entry
+            logos[existingIndex].imagePath = logoData;
+          } else {
+            // Add new entry
+            logos.push({
+              chatbotId: selectedBot.id,
+              imagePath: logoData
+            });
+          }
+          
+          // Save updated array back to localStorage
+          saveLogosToStorage(logos);
+          
+          resolve(logoData);
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read file'));
+        };
+        reader.readAsDataURL(logoFile);
+      } catch (error) {
+        console.error('Error saving logo to localStorage:', error);
+        reject(error);
+      }
+    });
+  };
+
+  // Remove logo from localStorage array
+  const removeLogoFromLocalStorage = (chatbotId) => {
+    if (!chatbotId) return;
+    
+    const logos = getLogosFromStorage();
+    const updatedLogos = logos.filter(item => item.chatbotId !== chatbotId);
+    
+    saveLogosToStorage(updatedLogos);
+  };
+
+  // Handle file upload
   const handleUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        alert('Please upload a valid image file (JPEG, PNG, GIF, or WEBP)');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit');
+        return;
+      }
+
+      setLogoFile(file);
+      setLogoToBeRemoved(false);
+      
+      // Create a preview URL for the image
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCustomization(prev => ({
-          ...prev,
-          logo: reader.result, // Save base64 string of image
-        }));
+        setLogoPreview(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -103,6 +217,145 @@ function App() {
       ...prev,
       logo: null,
     }));
+    setLogoFile(null);
+    setLogoPreview(null);
+    setLogoToBeRemoved(true);
+  };
+
+  useEffect(() => {
+    // check if integration data exist
+    const isIntegrationDataExist = async (chatbotId) => {
+      try {
+        const response = await fetch(`/api/customize/get?chatbotId=${chatbotId}`)
+        const data = await response.json();
+        console.log("integration data", data);
+        if (data) {
+          setCustomization((prev) => {
+            return {
+              ...prev,
+              id: data.id,
+              logo: data.logo,
+              primaryColor: data.primaryColor,
+              secondaryColor: data.secondaryColor,
+              chatbotId: data.chatbotId,
+              domain: data.domain,
+              pills: data.pills,
+              initialMessage: data.initialMessage,
+              subText: data.subText,
+              phone: data.phone
+            }
+          });
+          
+          // Check for logo in localStorage first
+          const localLogo = getLogoByChatbotId(chatbotId);
+          if (localLogo) {
+            setLogoPreview(localLogo);
+          } else if (data.logo) {
+            // Fallback to any existing logo URL from the API
+            setLogoPreview(data.logo);
+          }
+          
+          setIntegrationData(data);
+        }
+        else {
+          setIntegrationData(null);
+          setCustomization((prev) => {
+            return {
+              ...prev,
+              id: '',
+              logo: null,
+              primaryColor: '',
+              secondaryColor: '',
+              chatbotId: selectedBot.id,
+              domain: '',
+              pills: [], // Initialize as an array
+              initialMessage: 'Hello! How can I help you today?',
+              subText: '',
+              phone: '',
+            }
+          });
+          
+          // Still check localStorage for a logo
+          const localLogo = getLogoByChatbotId(chatbotId);
+          if (localLogo) {
+            setLogoPreview(localLogo);
+          } else {
+            setLogoPreview(null);
+          }
+          
+          console.log("failed to fetch integration data", data);
+        }
+      }
+      catch (error) {
+        console.log("error getting integration", error);
+      }
+    }
+
+    if (selectedBot) {
+      isIntegrationDataExist(selectedBot?.id);
+    }
+  }, [selectedBot, setSelectedBot]);
+
+  const handleAppearance = async () => {
+    setLoading(true);
+
+    try {
+      let logoUrl = customization.logo;
+      
+      if (logoToBeRemoved && selectedBot?.id) {
+        // Remove logo from localStorage if user clicked Remove
+        removeLogoFromLocalStorage(selectedBot.id);
+        logoUrl = null;
+      } else if (logoFile && selectedBot?.id) {
+        // Save to localStorage and get back the dataURL
+        logoUrl = await saveLogoToLocalStorage();
+      } else if (!logoFile && !logoToBeRemoved) {
+        // Use existing logo from localStorage if available
+        logoUrl = getLogoByChatbotId(selectedBot.id);
+      }
+     
+      // Prepare data with possibly new logo URL or null if removed
+      const dataToSubmit = {
+        ...customization,
+        logo: logoUrl // This will be a data URL or null
+      };
+
+      // if integration data exist update the data if not post the data
+      const endpoint = integrationData 
+        ? '/api/customize/update' 
+        : '/api/customize/create';
+      
+      const method = 'PATCH';
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSubmit)
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        setLoading(false);
+        // Update the customization state with the saved logo URL
+        setCustomization(prev => ({
+          ...prev,
+          logo: logoUrl
+        }));
+        
+        // Reset the removal flag after successful save
+        setLogoToBeRemoved(false);
+        
+        alert(integrationData ? 'Data Updated' : 'Data Created');
+      } else {
+        setLoading(false);
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      setLoading(false);
+      console.error("Error:", error);
+      alert('Error: ' + error.message);
+    }
   };
 
   return (
@@ -112,50 +365,6 @@ function App() {
         <h1 className="text-2xl font-bold text-gray-800 mb-2">Integration Settings</h1>
         <p className="text-gray-600">Configure and integrate your chatbots across different platforms</p>
       </div>
-
-      {/* DNS Record */}
-      <Card>
-        <CardHeader>
-          <CardTitle>DNS Record</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 shadow-lg">
-              <thead>
-                <tr className="bg-gray-200 text-left">
-                  <th className="px-4 py-2 border">Type</th>
-                  <th className="px-4 py-2 border">Name</th>
-                  <th className="px-4 py-2 border">TTL</th>
-                  <th className="px-4 py-2 border">Current Value</th>
-                  <th className="px-4 py-2 border">New Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border">
-                  <td className="px-4 py-2 border">A</td>
-                  <td className="px-4 py-2 border">@</td>
-                  <td className="px-4 py-2 border">60 mins</td>
-                  <td className="px-4 py-2 border">76.223.105.230</td>
-                  <td className="px-4 py-2 border">23.227.38.65</td>
-                </tr>
-                <tr className="border">
-                  <td className="px-4 py-2 border">CNAME</td>
-                  <td className="px-4 py-2 border">
-                    <input
-                      type="text"
-                      placeholder="Enter Name"
-                      className="px-2 py-1 border rounded-md w-full"
-                    />
-                  </td>
-                  <td className="px-4 py-2 border">60 mins</td>
-                  <td className="px-4 py-2 border">chatlx.com</td>
-                  <td className="px-4 py-2 border">shops.chatlx.com</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Select Chatbot */}
       <Card>
@@ -184,7 +393,7 @@ function App() {
               <CardTitle>Customize Appearance</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              
+
               {/* Domain */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -200,16 +409,59 @@ function App() {
                 />
               </div>
 
-              {/* Upload Logo Section */}
+              {/* DNS Record */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  DNS Record
+                </label>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border border-gray-300 shadow-lg">
+                    <thead>
+                      <tr className="bg-gray-200 text-left">
+                        <th className="px-4 py-2 border">Type</th>
+                        <th className="px-4 py-2 border">Name</th>
+                        <th className="px-4 py-2 border">TTL</th>
+                        <th className="px-4 py-2 border">Current Value</th>
+                        <th className="px-4 py-2 border">New Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border">
+                        <td className="px-4 py-2 border">A</td>
+                        <td className="px-4 py-2 border">@</td>
+                        <td className="px-4 py-2 border">60 mins</td>
+                        <td className="px-4 py-2 border">76.223.105.230</td>
+                        <td className="px-4 py-2 border">23.227.38.65</td>
+                      </tr>
+                      <tr className="border">
+                        <td className="px-4 py-2 border">CNAME</td>
+                        <td className="px-4 py-2 border">
+                          <input
+                            type="text"
+                            placeholder="Enter Name"
+                            className="px-2 py-1 border rounded-md w-full"
+                          />
+                        </td>
+                        <td className="px-4 py-2 border">60 mins</td>
+                        <td className="px-4 py-2 border">chatlx.com</td>
+                        <td className="px-4 py-2 border">shops.chatlx.com</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+
+              {/* Upload Logo Section - Now using localStorage with array of objects */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Upload Logo
                 </label>
-                {!customization.logo ? (
+                {!logoPreview ? (
                   <div className="flex items-center space-x-2">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
                       onChange={handleUpload}
                       className="hidden"
                       id="logoUpload"
@@ -220,13 +472,17 @@ function App() {
                     >
                       Upload
                     </label>
+                    <span className="text-sm text-gray-500">
+                      JPEG, PNG, GIF, WEBP (max 5MB)
+                    </span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-4">
-                    <img src={customization.logo} alt="Logo" className="w-16 h-16 object-cover rounded-md border" />
+                    <img src={logoPreview} alt="Logo" className="w-16 h-16 object-cover rounded-md border" />
                     <button
                       onClick={handleRemove}
                       className="p-2 bg-red-500 text-white rounded-md"
+                      disabled={loading}
                     >
                       Remove
                     </button>
@@ -234,7 +490,7 @@ function App() {
                 )}
               </div>
 
-             {/* Primary Color */}
+              {/* Primary Color */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Primary Color
@@ -261,7 +517,7 @@ function App() {
                 </div>
               </div>
 
-             {/* Secondary Color */}
+              {/* Secondary Color */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Secondary Color
@@ -288,37 +544,8 @@ function App() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Widget Position
-                </label>
-                <select
-                  value={customization.position}
-                  onChange={(e) => setCustomization(prev => ({
-                    ...prev,
-                    position: e.target.value
-                  }))}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="right">Bottom Right</option>
-                  <option value="left">Bottom Left</option>
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bot Name
-                </label>
-                <Input
-                  value={customization.botName}
-                  onChange={(e) => setCustomization(prev => ({
-                    ...prev,
-                    botName: e.target.value
-                  }))}
-                  placeholder="Enter bot name"
-                />
-              </div>
-
+              {/* Initial Message */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Initial Message
@@ -333,9 +560,40 @@ function App() {
                 />
               </div>
 
+              {/* SubText */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  1st Pill
+                  Subtext
+                </label>
+                <Input
+                  value={customization.subText}
+                  onChange={(e) => setCustomization(prev => ({
+                    ...prev,
+                    subText: e.target.value
+                  }))}
+                  placeholder="Enter Subtext"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone
+                </label>
+                <Input
+                  value={customization.phone}
+                  onChange={(e) => setCustomization(prev => ({
+                    ...prev,
+                    phone: e.target.value
+                  }))}
+                  placeholder="Enter Phone"
+                />
+              </div>
+
+              {/* Pills */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Pills
                 </label>
                 {customization.pills.map((pill, index) => (
                   <Input
@@ -350,102 +608,21 @@ function App() {
                   type="button"
                   onClick={addPill}
                   className="mt-2 p-2 bg-blue-500 text-white rounded"
+                  disabled={loading}
                 >
                   Add Pill
                 </button>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Integration Code */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Integration Code</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* HTML Integration */}
-              <div>
-                <h3 className="text-lg font-medium mb-2">HTML Script Tag</h3>
-                <div className="relative">
-                  <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-x-auto">
-                    {generateHTMLSnippet()}
-                  </pre>
-                  <button
-                    onClick={() => copyToClipboard(generateHTMLSnippet())}
-                    className="absolute top-2 right-2 p-2 bg-white rounded-md border shadow-sm hover:bg-gray-50"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                    </svg>
-                  </button>
-                </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  Add this script tag to your HTML page just before the closing &lt;/body&gt; tag.
-                </p>
-              </div>
+              {/* Done Button */}
+              <button
+                className={`p-2 text-white rounded-md ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500'}`}
+                onClick={handleAppearance}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : 'Save Settings'}
+              </button>
 
-              {/* React Integration */}
-              <div>
-                <h3 className="text-lg font-medium mb-2">React Component</h3>
-                <div className="relative">
-                  <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-x-auto">
-                    {generateReactSnippet()}
-                  </pre>
-                  <button
-                    onClick={() => copyToClipboard(generateReactSnippet())}
-                    className="absolute top-2 right-2 p-2 bg-white rounded-md border shadow-sm hover:bg-gray-50"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                    </svg>
-                  </button>
-                </div>
-                <p className="text-sm text-gray-500 mt-2">
-                  Install our React package: <code className="bg-gray-100 px-2 py-1 rounded">npm install @evolveai/react</code>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Integration Guide */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Start Guide</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    1
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="text-lg font-medium">Choose Integration Method</h4>
-                    <p className="text-gray-600">Select between HTML script tag or React component based on your tech stack.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    2
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="text-lg font-medium">Customize Appearance</h4>
-                    <p className="text-gray-600">Adjust the color, position, and messaging to match your brand.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    3
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="text-lg font-medium">Test Integration</h4>
-                    <p className="text-gray-600">Test the chatbot in a development environment before going live.</p>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -455,7 +632,7 @@ function App() {
               Need more customization options? Check out our <a href="/docs" className="underline">advanced integration guide</a> for custom styling, events, and callbacks.
             </AlertDescription>
           </Alert>
-        </>
+        </> 
       )}
     </div>
   );

@@ -4,12 +4,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../context/ChatContext';
 
 export default function MessageInput() {
-  const { sendMessage, isLoading } = useChat();
+  const { sendMessage, isLoading, currentChatId } = useChat();
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
-    if (message.trim() && !isLoading) {
+    if (message.trim() && !isLoading && currentChatId) {
       sendMessage(message);
       setMessage('');
     }
@@ -29,6 +29,11 @@ export default function MessageInput() {
     }
   }, [message]);
 
+  // Reset message when switching chats
+  useEffect(() => {
+    setMessage('');
+  }, [currentChatId]);
+
   return (
     <div className="p-4 border-t border-gray-800">
       <div className="max-w-3xl mx-auto relative">
@@ -40,13 +45,13 @@ export default function MessageInput() {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
           rows={1}
-          disabled={isLoading}
+          disabled={isLoading || !currentChatId}
         ></textarea>
         <button 
           onClick={handleSend}
-          disabled={isLoading || message.trim() === ''}
+          disabled={isLoading || message.trim() === '' || !currentChatId}
           className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-white
-            ${(isLoading || message.trim() === '') ? 'opacity-50 cursor-not-allowed' : 'opacity-100 hover:text-purple-400'}`}
+            ${(isLoading || message.trim() === '' || !currentChatId) ? 'opacity-50 cursor-not-allowed' : 'opacity-100 hover:text-purple-400'}`}
         >
           {isLoading ? (
             <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

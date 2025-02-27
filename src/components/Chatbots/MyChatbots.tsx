@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {useRouter} from 'next/navigation';
 
 interface MyChatbotsProps {
   userDetails: any;
@@ -9,8 +10,9 @@ interface MyChatbotsProps {
 }
 
 function MyChatbots({ userDetails, onPreview, chatbotData }: MyChatbotsProps) {
-
-
+   
+  const router = useRouter();
+   
   const handleDelete = (botId: number) => {
     if (window.confirm('Are you sure you want to delete this chatbot?')) {
       console.log('Deleting bot:', botId);
@@ -59,7 +61,10 @@ function MyChatbots({ userDetails, onPreview, chatbotData }: MyChatbotsProps) {
 
                   <div className="flex md:flex-col justify-end space-y-2">
                     <button
-                      onClick={() => onPreview(bot?.id)} // Use callback
+                      // onClick={() => onPreview(bot?.id)} // Use callback
+                      onClick={()=>{
+                        router.push(`/chatlx/${bot?.id}`)
+                      }}
                       className="w-full px-3 py-2 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors"
                     >
                       Preview

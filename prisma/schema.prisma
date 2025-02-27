@@ -57,13 +57,16 @@ model Lead {
 }
 
 model Integration {
-  id           String  @id @default(uuid())
-  logo         String?
-  primaryColor String?
-  buttonColor  String?
-  chatbotId    String // ✅ Ensure this is defined
-  chatbot      Chatbot @relation(fields: [chatbotId], references: [id])
-  domain       String?
-  pills        Json?
-  subText      String?
+  id             String   @id @default(uuid())
+  logo           String?
+  primaryColor   String?
+  secondaryColor String?
+  chatbotId      String?  // Optional
+  chatbot        Chatbot? @relation(fields: [chatbotId], references: [id]) // Optional
+  domain         String?
+  pills          Json?
+  initialMessage String?
+  subText        String?
+  phone          String?
 }
+

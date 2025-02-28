@@ -7,9 +7,10 @@ interface MyChatbotsProps {
   userDetails: any;
   onPreview: (botId: number) => void; // Add callback prop
   chatbotData: any;
+  setActivePage: any;
 }
 
-function MyChatbots({ userDetails, onPreview, chatbotData }: MyChatbotsProps) {
+function MyChatbots({ userDetails, onPreview, chatbotData, setActivePage }: MyChatbotsProps) {
    
   const router = useRouter();
    
@@ -25,10 +26,11 @@ function MyChatbots({ userDetails, onPreview, chatbotData }: MyChatbotsProps) {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">My Chatbots</h1>
         <a
-          href="/dashboard/create"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          // href="/dashboard/create"
+          onClick={()=>setActivePage("create")}
+          className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
-          Create New Chatbot
+          Create New Bot
         </a>
       </div>
 
@@ -63,7 +65,8 @@ function MyChatbots({ userDetails, onPreview, chatbotData }: MyChatbotsProps) {
                     <button
                       // onClick={() => onPreview(bot?.id)} // Use callback
                       onClick={()=>{
-                        router.push(`/chatlx/${bot?.id}`)
+                        // router.push(`/chatlx/${bot?.id}`)
+                        window.open(`/chatlx/${bot?.id}`, '_blank');
                       }}
                       className="w-full px-3 py-2 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors"
                     >
@@ -92,7 +95,8 @@ function MyChatbots({ userDetails, onPreview, chatbotData }: MyChatbotsProps) {
             <p className="mt-1 text-sm text-gray-500">Get started by creating a new chatbot.</p>
             <div className="mt-6">
               <a
-                href="/dashboard/create"
+                // href="/dashboard/create"
+                onClick={()=> setActivePage('create')}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 Create New Chatbot

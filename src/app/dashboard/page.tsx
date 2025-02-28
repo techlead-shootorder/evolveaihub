@@ -11,6 +11,7 @@ import IntegrationSettings from '@/components/Chatbots/IntegrationSettings';
 import ProfileSettings from '@/components/Dashboard/ProfileSettings';
 import SubscriptionManagement from '@/components/Dashboard/SubscriptionManagement';
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
+import Leads from '@/components/Dashboard/Leads';
 
 // SVG Icons Component
 const Icons = {
@@ -61,6 +62,7 @@ const DashboardLayout = () => {
     { id: 'create', label: 'Create New Chatbot', icon: Icons.Bot },
     { id: 'analytics', label: 'Chatbot Analytics', icon: Icons.Dashboard },
     { id: 'integration', label: 'Integration Settings', icon: Icons.Dashboard },
+    { id: 'leads', label: 'Leads', icon: Icons.Dashboard }
   ];
 
   const bottomNavItems = [
@@ -160,10 +162,11 @@ const DashboardLayout = () => {
 
     const components = {
       dashboard: <DashboardContent setActivePage={setActivePage} userDetails={userDetails} chatbotData={chatbotData} />,
-      chatbots: <MyChatbots userDetails={userDetails} onPreview={handlePreviewChatbot} chatbotData={chatbotData} />, // Pass callback
+      chatbots: <MyChatbots userDetails={userDetails} onPreview={handlePreviewChatbot} chatbotData={chatbotData} setActivePage={setActivePage} />, // Pass callback
       create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} showPreview={showPreview} setShowPreview={setShowPreview} createdChatBotData={createdChatBotData} setCreatedChatBotData={setCreatedChatBotData} />,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings userDetails={userDetails} chatbotData={chatbotData} />,
+      leads: <Leads/>,
       profile: <ProfileSettings userDetails={userDetails} />,
       subscription: <SubscriptionManagement />,
       support: <Support />,

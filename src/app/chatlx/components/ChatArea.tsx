@@ -48,7 +48,7 @@ export default function ChatArea() {
                     // Welcome screen for new chat
                     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-white p-6">
                         <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 text-center">
-                            {integration?.initialMessage || "Welcome to Oasis Assistant"}
+                            {integration?.initialMessage || "Welcome to Shootorder Assistant"}
                         </h1>
                         <p className="mt-3 text-lg text-gray-300">
                             {integration?.subText || "Ask me anything about our services"}

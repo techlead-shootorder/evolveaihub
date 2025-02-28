@@ -76,12 +76,13 @@ export async function POST(req: Request) {
       console.error("Chatbot not found for id:", id);
       return NextResponse.json({ error: "Chatbot not found" }, { status: 404 });
     }
-
+    
     let lead = leadId ? await prisma.lead.findUnique({ where: { id: leadId } }) : null;
     const latestMessage = messages[messages.length - 1]?.content || "";
     const newLeadInfo = extractLeadInfo(latestMessage);
 
     if (lead) {
+      console.log("updating existing lead", lead);
       const updatedLeadInfo = {
         name: newLeadInfo.name || lead.name,
         email: newLeadInfo.email || lead.email,
@@ -98,7 +99,9 @@ export async function POST(req: Request) {
         },
       });
     } else {
+      console.log("creating new lead")
       lead = await prisma.lead.create({
+
         data: {
           name: newLeadInfo.name,
           email: newLeadInfo.email,

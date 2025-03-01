@@ -37,16 +37,45 @@ function createLeadCaptureSystemMessage(config: any, leadInfo: LeadInfo) {
 
 function extractLeadInfo(message: string): Partial<LeadInfo> {
   const info: Partial<LeadInfo> = {};
+
+  console.log("messages of user------>", message);
+  
   const emailRegex = /[\w.-]+@[\w.-]+\.\w+/;
-  const phoneRegex = /(\+\d{1,3}[-.]?)?\d{3}[-.]?\d{3}[-.]?\d{4}/;
-  const nameRegex = /(?:my name is|i am|i'm) ([A-Za-z\s]+)/i;
+  const phoneRegex = /(\+\d{1,3}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}/;
+  const nameRegex = /(?:(?:my|the) name(?:'s| is)|i(?:'m| am)(?: called)?) ([A-Za-z][A-Za-z\s'-]{0,30}[A-Za-z])/i;
+  const altNameRegex = /(?:this is|hey,? it'?s|hello,? (?:i'?m|this is)) ([A-Za-z][A-Za-z\s'-]{0,30}[A-Za-z])/i;
 
-  if (emailRegex.test(message)) info.email = message.match(emailRegex)![0];
-  if (phoneRegex.test(message)) info.phone = message.match(phoneRegex)![0];
-  if (nameRegex.test(message)) info.name = message.match(nameRegex)![1].trim();
+  if (emailRegex.test(message)) {
+    info.email = message.match(emailRegex)![0];
+  }
 
+  if (phoneRegex.test(message)) {
+    info.phone = message.match(phoneRegex)![0];
+  }
+
+  let nameMatch = message.match(nameRegex) || message.match(altNameRegex);
+  
+  if (nameMatch && nameMatch[1]) {
+    info.name = nameMatch[1].trim();
+  } else {
+    // Check if the entire message is just one or two words (potential name)
+    const words = message.trim().split(/\s+/);
+    if (words.length <= 2 && /^[A-Za-z\s'-]+$/.test(message.trim())) {
+      info.name = message.trim();
+    }
+  }
+
+  // Clean up name formatting
+  if (info.name) {
+    info.name = info.name.replace(/[.,;:!?]$/, '').trim();
+    info.name = info.name.replace(/\b\w/g, c => c.toUpperCase()); // Capitalize each word
+  }
+
+  console.log("Extracted info:", info);
+  
   return info;
 }
+
 
 export async function POST(req: Request) {
   try {
@@ -99,7 +128,8 @@ export async function POST(req: Request) {
         },
       });
     } else {
-      console.log("creating new lead")
+      console.log("creating new lead", lead);
+      console.log("newLeadInfo------>", newLeadInfo)
       lead = await prisma.lead.create({
 
         data: {

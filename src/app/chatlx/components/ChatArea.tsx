@@ -28,7 +28,7 @@ export default function ChatArea() {
                 {!isNewChat ? (
                     // Regular chat view
                     messages.map((message, index) => (
-                      index != 0 &&  <div
+                     <div
                             key={index}
                             className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
                         >

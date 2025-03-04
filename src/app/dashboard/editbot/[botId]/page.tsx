@@ -16,62 +16,24 @@ function page() {
   // const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
  
-  const [formData, setFormData] = useState({
-    // Company Information
-    companyName: '',
-    companyDescription: '',
-    industry: '',
-    location: '',
-    operatingHours: '',
-    contactInfo: {
-      email: '',
-      phone: '',
-      address: ''
-    },
-
-    // Services
-    services: [{
-      name: '',
-      description: ''
-    }],
-    pricing: '',
-    serviceAreas: '',
-
-    // Bot Settings
-    botName: '',
-    welcomeMessage: '',
-    fallbackMessage: '',
-    personality: 'professional',
-
-    // Training Data
-    faqs: [{
-      question: '',
-      answer: ''
-    }],
-    policies: {
-      returns: '',
-      privacy: '',
-      terms: ''
-    },
-    createdBy: '',
-  });
+  const [formData, setFormData] = useState(null);
 
   useEffect(()=>{
-    const fetchIntegration = async () => {
+    const fetchChatBotData = async () => {
       if (!botId) return;
       try {
-        const response = await fetch(`/api/customize/get?chatbotId=${botId}`);
+        const response = await fetch(`/api/getSingleChatbot?botId=${botId}`);
         if (!response.ok) throw new Error('Failed to fetch integration data');
         const data = await response.json();
         console.log("data in edit bot", data);
-        
+        setFormData(data);
         // setIntegration(data);
       } catch (error) {
         console.error("Error fetching integration:", error);
       }
     };
     
-    fetchIntegration();
+    fetchChatBotData();
   }, [botId])
 
 
@@ -106,7 +68,7 @@ function page() {
     setLoading(true);
     //Below route is to create a chatbot 
     try {
-      const response = await fetch('/api/chatbot', {
+      const response = await fetch(`/api/getSingleChatbot?botData=${formData}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedFormData),
@@ -154,7 +116,7 @@ function page() {
       case 1: // Company Info
         if (!formData.companyName) newErrors['companyName'] = 'Required';
         if (!formData.companyDescription) newErrors['companyDescription'] = 'Required';
-        if (!formData.contactInfo.email) newErrors['contactInfo.email'] = 'Required';
+        if (!formData.email) newErrors['email'] = 'Required';
         break;
       case 2: // Services
         if (!formData.services.length) newErrors['services'] = 'Add at least one service';
@@ -209,22 +171,22 @@ function page() {
         <label className="block text-sm font-medium mb-1">Contact Information</label>
         <Input
           type="email"
-          value={formData.contactInfo.email}
-          onChange={(e) => handleInputChange('contactInfo.email', e.target.value)}
-          className={`mb-2 ${errors['contactInfo.email'] ? 'border-red-500' : ''}`}
+          value={formData.email}
+          onChange={(e) => handleInputChange('email', e.target.value)}
+          className={`mb-2 ${errors['email'] ? 'border-red-500' : ''}`}
           placeholder="Email*"
         />
-        {errors['contactInfo.email'] && <p className="text-red-500 text-sm mt-1">{errors['contactInfo.email']}</p>}
+        {errors['email'] && <p className="text-red-500 text-sm mt-1">{errors['contactInfo.email']}</p>}
         <Input
           type="tel"
-          value={formData.contactInfo.phone}
-          onChange={(e) => handleInputChange('contactInfo.phone', e.target.value)}
+          value={formData.phone}
+          onChange={(e) => handleInputChange('phone', e.target.value)}
           className="mb-2"
           placeholder="Phone number"
         />
         <textarea
-          value={formData.contactInfo.address}
-          onChange={(e) => handleInputChange('contactInfo.address', e.target.value)}
+          value={formData.address}
+          onChange={(e) => handleInputChange('address', e.target.value)}
           className="w-full p-2 border rounded-md"
           placeholder="Business address"
         />
@@ -416,7 +378,7 @@ function page() {
             </div>
           </div>
 
-          {renderCurrentStep()}
+          {formData && renderCurrentStep()}
         </CardContent>
 
         <CardFooter className="flex justify-between">
@@ -443,7 +405,7 @@ function page() {
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            {loading ? <LoadingSpinner /> : step === 4 ? 'Create Chatbot' : 'Next'}
+            {loading ? <LoadingSpinner /> : step === 4 ? 'Update Chatbot' : 'Next'}
           </button>
 
         </CardFooter>

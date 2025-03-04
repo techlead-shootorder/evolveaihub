@@ -49,6 +49,9 @@ import { Geist, Geist_Mono, Manrope, Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/home/Header";
 import Footer from "@/components/home/Footer";
+import { ThemeProvider } from "@/components/theme-provider"
+import { SessionProvider } from "next-auth/react";
+import {Providers} from "@/components/Providers";
 
 
 const geistSans = Geist({
@@ -96,9 +99,11 @@ export default function RootLayout({
           } as React.CSSProperties
         }
       >
-        <Header />
+         <Providers>
+        
         {children}
-        <Footer/>
+       
+        </Providers>
       </body>
     </html>
   );

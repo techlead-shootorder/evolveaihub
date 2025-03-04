@@ -257,6 +257,7 @@ const CallToAction = () => (
 const Home = () => {
   return (
     <div className="min-h-screen">
+       <Header />
       <main>
         <Hero />
         <Features />
@@ -267,6 +268,7 @@ const Home = () => {
         {/* <Dashboard />
         <CallToAction /> */}
       </main>
+      <Footer/>
     </div>
   );
 };

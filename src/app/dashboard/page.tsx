@@ -12,6 +12,8 @@ import ProfileSettings from '@/components/Dashboard/ProfileSettings';
 import SubscriptionManagement from '@/components/Dashboard/SubscriptionManagement';
 import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
 import Leads from '@/components/Dashboard/Leads';
+import Image from "next/image";
+
 
 // SVG Icons Component
 const Icons = {
@@ -48,11 +50,11 @@ const DashboardLayout = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [chatbotCreated, setChatbotCreated] = useState(false);
-   const [createdChatBotData, setCreatedChatBotData] = useState('');
+  const [createdChatBotData, setCreatedChatBotData] = useState('');
   const [userDetails, setUserDetails] = useState<any>(null);
   const [previewChatbotId, setPreviewChatbotId] = useState<number | null>(null); // New state for preview
-   const [showPreview, setShowPreview] = useState(false);
-    const [chatbotData, setChatBotData] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [chatbotData, setChatBotData] = useState(null);
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -101,22 +103,22 @@ const DashboardLayout = () => {
   }, [session, status, router]);
 
   // Get Chatbot
-    useEffect(() => {
-        const fetchChatbot = async () => {
-          try {
-            const res = await fetch(`/api/getChatbot?id=${userDetails?.id}`);
-            const data = await res.json();
-            console.log("chatbot data", data)
-            setChatBotData(data);
-          } catch (error) {
-            console.log("Error fetching chatbot:", error);
-          }
-        };
-      if(userDetails){
-
-        fetchChatbot(); // Call the async function inside useEffect
+  useEffect(() => {
+    const fetchChatbot = async () => {
+      try {
+        const res = await fetch(`/api/getChatbot?id=${userDetails?.id}`);
+        const data = await res.json();
+        console.log("chatbot data", data)
+        setChatBotData(data);
+      } catch (error) {
+        console.log("Error fetching chatbot:", error);
       }
-      }, [userDetails]);
+    };
+    if (userDetails) {
+
+      fetchChatbot(); // Call the async function inside useEffect
+    }
+  }, [userDetails]);
 
   const handleLogout = () => {
     signOut();
@@ -148,7 +150,7 @@ const DashboardLayout = () => {
       className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${activePage === item.id
         ? 'bg-blue-100 text-blue-600'
         : 'text-gray-600 hover:bg-gray-100'
-      } ${isBottom ? 'mt-1' : 'mb-1'}`}
+        } ${isBottom ? 'mt-1' : 'mb-1'}`}
     >
       <item.icon />
       {!isCollapsed && <span className="ml-3">{item.label}</span>}
@@ -159,7 +161,7 @@ const DashboardLayout = () => {
     if (!isAuthenticated) return null;
 
     if (chatbotCreated) {
-      return <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id}/>;
+      return <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id} />;
     }
 
     const components = {
@@ -168,7 +170,7 @@ const DashboardLayout = () => {
       create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} showPreview={showPreview} setShowPreview={setShowPreview} createdChatBotData={createdChatBotData} setCreatedChatBotData={setCreatedChatBotData} />,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings userDetails={userDetails} chatbotData={chatbotData} />,
-      leads: <Leads/>,
+      leads: <Leads />,
       profile: <ProfileSettings userDetails={userDetails} />,
       subscription: <SubscriptionManagement />,
       support: <Support />,
@@ -204,7 +206,8 @@ const DashboardLayout = () => {
         className={`bg-white border-r border-gray-200 transition-all duration-300 flex flex-col ${isCollapsed ? 'w-16' : 'w-64'} fixed h-full`}
       >
         <div className="h-16 border-b flex items-center justify-between px-4">
-          {!isCollapsed && <span className="text-xl font-bold">ChatLX</span>}
+          {!isCollapsed && <span className="text-xl font-bold"> <Image src='/images/logo/chatlx_logo.webp' className="object-cover h-[60px] w-[150px]" alt="logo" width={100} height={100} />
+          </span>}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"

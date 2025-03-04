@@ -7,12 +7,12 @@ const prisma = new PrismaClient();
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("id");
+    const botId = searchParams.get("botId");
 
     let chatbots;
-    if (userId) {
-      chatbots = await prisma.chatbot.findMany({
-        where: { createdBy: userId },
+    if (botId) {
+      chatbots = await prisma.chatbot.findUnique({
+        where: { id: botId },
       });
     } 
 

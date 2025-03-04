@@ -1,13 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaChevronDown } from "react-icons/fa";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 function Header() {
   const [openMenu, setOpenMenu] = useState(null);
+  const router = useRouter();
+  const { data: session, status } = useSession();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+    // Check Authentication
+    useEffect(() => {
+      const checkAuth = async () => {
+        if (status === "loading") return;
+        const userData = JSON.parse(localStorage.getItem("userData") ?? "{}") as UserData;
   
+        // if not a logged in user
+        if (!userData?.id && !session) {
+          setIsLoggedIn(false);
+        
+
+        } else{
+          setIsLoggedIn(true);
+        }
+
+      };
+      checkAuth();
+    }, [session, status, router]);
+
+
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto flex justify-between items-center py-4 px-4 relative">
@@ -16,23 +41,7 @@ function Header() {
           href="/"
           className="text-2xl font-bold text-gray-800 flex items-center"
         >
-          Sandbox
-          <span className="ml-1 text-blue-500">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.26 5.82 22 7 14.14l-5-4.87 6.91-1.01z"
-              />
-            </svg>
-          </span>
+          <Image src='/images/logo/chatlx_logo.webp' className="object-cover h-[60px] w-[150px]" alt="logo" width={150} height={80}/>
         </Link>
 
         {/* Navigation Links */}
@@ -45,9 +54,20 @@ function Header() {
             <i className="fas fa-info-circle text-gray-700"></i>
           </button> */}
 
-          <button className="bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-blue-600 transition">
+         {isLoggedIn ?(
+          <button
+          className="bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-blue-600 transition"
+          onClick={() => router.push("/dashboard")}
+        >
+          Go to Dashboard
+        </button>
+
+         ) : (<button
+            className="bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-blue-600 transition"
+            onClick={() => router.push("/login")}
+          >
             Sign In
-          </button>
+          </button>)}
         </div>
       </div>
     </header>

@@ -33,6 +33,16 @@
     --ring: 222.2 84% 4.9%;
  
     --radius: 0.5rem;
+
+
+    --color-primary: #747ED1;
+    --color-secondary: #9333ea;
+    --background-color: #f3f4f6;
+    --color-text-heading: #343F52; /* Dark gray for headings */
+    --color-text-paragraph: #677081; /* Lighter gray for body text */
+    --header-height: 80px;
+    --color-button-bg: #45C4A0;
+    --bg-soft-primary: #edf2fc;
   }
  
   .dark {

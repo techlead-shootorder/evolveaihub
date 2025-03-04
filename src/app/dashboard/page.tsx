@@ -71,6 +71,7 @@ const DashboardLayout = () => {
     { id: 'support', label: 'Support', icon: Icons.Dashboard },
   ];
 
+  // Check Authentication
   useEffect(() => {
     const checkAuth = async () => {
       if (status === "loading") return;
@@ -99,6 +100,7 @@ const DashboardLayout = () => {
     checkAuth();
   }, [session, status, router]);
 
+  // Get Chatbot
     useEffect(() => {
         const fetchChatbot = async () => {
           try {

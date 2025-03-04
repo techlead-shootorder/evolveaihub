@@ -73,7 +73,7 @@ function MyChatbots({ userDetails, onPreview, chatbotData, setActivePage }: MyCh
                       Preview
                     </button>
                     <button
-                      onClick={() => (window.location.href = `/dashboard/edit/${bot?.id}`)}
+                      onClick={() => (window.location.href = `/dashboard/editbot/${bot?.id}`)}
                       className="w-full px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                     >
                       Edit Chatbot

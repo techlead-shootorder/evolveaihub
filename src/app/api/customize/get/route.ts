@@ -15,6 +15,8 @@ export async function GET(req) {
       });
     } 
 
+    console.log("In bacckend ", integration);
+
     return NextResponse.json(integration, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

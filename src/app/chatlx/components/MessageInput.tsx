@@ -40,7 +40,7 @@ export default function MessageInput() {
         <textarea
           ref={textareaRef}
           className="w-full bg-gray-800 text-white rounded-lg pl-4 pr-12 py-3 resize-none"
-          placeholder="Message Ask Oasis... (Shift + Enter for new line)"
+          placeholder="Enter Prompt..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}

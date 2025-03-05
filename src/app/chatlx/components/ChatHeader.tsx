@@ -28,9 +28,9 @@ const ChatHeader = () => {
   return (
     <div className="flex items-center justify-end bg-gray-900 p-4 border-b border-gray-800">
       {/* Theme Toggle Icon */}
-      <button className="text-yellow-500 hover:text-yellow-400 p-2">
+      {/* <button className="text-yellow-500 hover:text-yellow-400 p-2">
         <Sun size={20} />
-      </button>
+      </button> */}
 
       {/* Divider */}
       <div className="w-px h-6 bg-gray-600 mx-4"></div>

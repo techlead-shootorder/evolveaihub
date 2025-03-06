@@ -4,16 +4,16 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 interface LeadInfo {
-  name?: string;
-  email?: string;
-  phone?: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
 }
 
 function createLeadCaptureSystemMessage(config: any, leadInfo: LeadInfo) {
-  const missingInfo = [];
+  const missingInfo: string[] = [];
   if (!leadInfo.name) missingInfo.push("name");
   if (!leadInfo.email) missingInfo.push("email");
-  if (!leadInfo.phone) missingInfo.push(  "phone");
+  if (!leadInfo.phone) missingInfo.push("phone");
 
   if (missingInfo.length === 0) {
     return `You are ${config.botName}, an AI sales agent for ${config.companyName}. 
@@ -24,7 +24,7 @@ function createLeadCaptureSystemMessage(config: any, leadInfo: LeadInfo) {
     Your current priority is to collect customer information naturally in conversation.
     Missing info: ${missingInfo.join(", ")}
     Guidelines:
-    1. Be conversational—don’t demand info directly.
+    1. Be conversational—don't demand info directly.
     2. Collect one piece at a time, starting with ${missingInfo[0]}.
     3. Answer questions while weaving in requests.
     4. Use personality: ${config.personality || "professional"}
@@ -38,51 +38,43 @@ function createLeadCaptureSystemMessage(config: any, leadInfo: LeadInfo) {
 function extractLeadInfo(message: string): Partial<LeadInfo> {
   const info: Partial<LeadInfo> = {};
 
-  console.log("messages of user------>", message);
+  console.log("User message:", message);
   
   const emailRegex = /[\w.-]+@[\w.-]+\.\w+/;
   const phoneRegex = /(\+\d{1,3}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}/;
   const nameRegex = /(?:(?:my|the) name(?:'s| is)|i(?:'m| am)(?: called)?) ([A-Za-z][A-Za-z\s'-]{0,30}[A-Za-z])/i;
   const altNameRegex = /(?:this is|hey,? it'?s|hello,? (?:i'?m|this is)) ([A-Za-z][A-Za-z\s'-]{0,30}[A-Za-z])/i;
 
-  if (emailRegex.test(message)) {
-    info.email = message.match(emailRegex)![0];
-  }
+  const emailMatch = message.match(emailRegex);
+  const phoneMatch = message.match(phoneRegex);
+  const nameMatch = message.match(nameRegex) || message.match(altNameRegex);
 
-  if (phoneRegex.test(message)) {
-    info.phone = message.match(phoneRegex)![0];
-  }
-
-  let nameMatch = message.match(nameRegex) || message.match(altNameRegex);
-  
+  if (emailMatch) info.email = emailMatch[0];
+  if (phoneMatch) info.phone = phoneMatch[0];
   if (nameMatch && nameMatch[1]) {
     info.name = nameMatch[1].trim();
   } else {
-    // Check if the entire message is just one or two words (potential name)
     const words = message.trim().split(/\s+/);
     if (words.length <= 2 && /^[A-Za-z\s'-]+$/.test(message.trim())) {
       info.name = message.trim();
     }
   }
 
-  // Clean up name formatting
   if (info.name) {
     info.name = info.name.replace(/[.,;:!?]$/, '').trim();
     info.name = info.name.replace(/\b\w/g, c => c.toUpperCase()); // Capitalize each word
   }
 
   console.log("Extracted info:", info);
-  
   return info;
 }
-
 
 export async function POST(req: Request) {
   try {
     console.log("[OpenAI API] Received request");
 
     const requestBody = await req.json();
-    console.log("Request body:", requestBody); // Log incoming data
+    console.log("Request body:", requestBody);
 
     const { messages, leadId, id } = requestBody;
 
@@ -100,49 +92,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
-    const chatbotConfig = await prisma.chatbot.findUnique({ where: { id: id } });
+    const chatbotConfig = await prisma.chatbot.findUnique({ where: { id } });
     if (!chatbotConfig) {
       console.error("Chatbot not found for id:", id);
       return NextResponse.json({ error: "Chatbot not found" }, { status: 404 });
     }
-    
+
     let lead = leadId ? await prisma.lead.findUnique({ where: { id: leadId } }) : null;
     const latestMessage = messages[messages.length - 1]?.content || "";
     const newLeadInfo = extractLeadInfo(latestMessage);
 
     if (lead) {
-      console.log("updating existing lead", lead);
-      const updatedLeadInfo = {
-        name: newLeadInfo.name || lead.name,
-        email: newLeadInfo.email || lead.email,
-        phone: newLeadInfo.phone || lead.phone,
-      };
+      console.log("Updating existing lead:", lead);
       lead = await prisma.lead.update({
         where: { id: leadId },
         data: {
-          name: updatedLeadInfo.name,
-          email: updatedLeadInfo.email,
-          phone: updatedLeadInfo.phone,
-          messages: [...(lead.messages as any[]), messages[messages.length - 1]],
+          name: newLeadInfo.name || lead.name,
+          email: newLeadInfo.email || lead.email,
+          phone: newLeadInfo.phone || lead.phone,
+          messages: { push: messages[messages.length - 1] }, // Correct Prisma update format
           chatbotId: id,
         },
       });
     } else {
-      console.log("creating new lead", lead);
-      console.log("newLeadInfo------>", newLeadInfo)
+      console.log("Creating new lead");
       lead = await prisma.lead.create({
-
         data: {
-          name: newLeadInfo.name,
-          email: newLeadInfo.email,
-          phone: newLeadInfo.phone,
+          name: newLeadInfo.name || null,
+          email: newLeadInfo.email || null,
+          phone: newLeadInfo.phone || null,
           messages: [messages[messages.length - 1]],
           chatbotId: id,
         },
       });
     }
 
-    const currentLeadInfo = {
+    const currentLeadInfo: LeadInfo = {
       name: lead.name,
       email: lead.email,
       phone: lead.phone,

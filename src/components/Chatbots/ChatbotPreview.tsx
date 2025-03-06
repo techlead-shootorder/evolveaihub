@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 
 interface ChatbotPreviewProps {
-  userDetails: any;
-  botId: string;
-  onPreview: (botId: string) => void;
+  userDetails?: any;
+  botId?: string;
+  onPreview?: (botId: string) => void;
 }
 
 const ChatbotPreview: React.FC<ChatbotPreviewProps> = ({userDetails, botId }) => {
@@ -17,7 +17,7 @@ const ChatbotPreview: React.FC<ChatbotPreviewProps> = ({userDetails, botId }) =>
   useEffect(() => {
     const fetchChatbotConfig = async () => {
       try {
-        const response = await fetch(`/api/chatbot/config?botId=${Id}`);
+        const response = await fetch(`/api/chatbot/config?botId=${botId}`);
         if (!response.ok) throw new Error('Failed to fetch chatbot config');
         const config = await response.json();
         setMessages([{ role: 'assistant', content: config.welcomeMessage || 'Hello! How can I assist you?' }]);

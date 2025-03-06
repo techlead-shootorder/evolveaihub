@@ -6,19 +6,33 @@ import ChatbotPreview from '@/components/Chatbots/ChatbotPreview';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 import { useParams, useRouter } from 'next/navigation';
 
-function page() {
+function Page() {
   const params = useParams();
+  const router = useRouter();
   const botId = params?.botId as string || null;
   console.log("botid", botId);
   const [step, setStep] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [errors, setErrors] = useState({});
-  // const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [createdChatBotData, setCreatedChatBotData] = useState(null);
  
-  const [formData, setFormData] = useState(null);
+  // Initialize formData with default values
+  const [formData, setFormData] = useState({
+    companyName: '',
+    companyDescription: '',
+    industry: '',
+    email: '',
+    phone: '',
+    address: '',
+    services: [{ name: '', description: '' }],
+    botName: '',
+    welcomeMessage: '',
+    personality: 'professional'
+  });
 
-  useEffect(()=>{
+  useEffect(() => {
     const fetchChatBotData = async () => {
       if (!botId) return;
       try {
@@ -27,16 +41,13 @@ function page() {
         const data = await response.json();
         console.log("data in edit bot", data);
         setFormData(data);
-        // setIntegration(data);
       } catch (error) {
         console.error("Error fetching integration:", error);
       }
     };
     
     fetchChatBotData();
-  }, [botId])
-
-
+  }, [botId]);
 
   const handleInputChange = (field, value, index?, subfield?) => {
     setFormData(prev => {
@@ -64,31 +75,31 @@ function page() {
   };
 
   const handleSubmit = async () => {
-    let updatedFormData = { ...formData, createdBy: userDetails.id }
+    let updatedFormData = { ...formData };
     setLoading(true);
-    //Below route is to create a chatbot 
+    //Below route is to update a chatbot 
     try {
-      const response = await fetch(`/api/getSingleChatbot?botData=${formData}`, {
-        method: 'POST',
+      const response = await fetch(`/api/getSingleChatbot?botId=${botId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedFormData),
       });
       const result = await response.json();
       if (response.ok) {
-        console.log("testing chatbot created response", result);
+        console.log("testing chatbot updated response", result);
         setCreatedChatBotData(result);
         setShowPreview(true);
-        if (onCreate) onCreate(); // Call the onCreate callback from parent
-        setLoading(false)
-        alert('Chat bot created')
+        setLoading(false);
+        alert('Chat bot updated successfully');
+        router.push('/dashboard/chatbots');
       } else {
         setLoading(false);
-        alert('Error creating chatbot: ' + result.error);
+        alert('Error updating chatbot: ' + result.error);
       }
     } catch (error) {
       setLoading(false);
       console.error("Error:", error);
-      alert('Error creating a chatbot: ' + (error as Error).message);
+      alert('Error updating a chatbot: ' + (error as Error).message);
     }
   };
 
@@ -96,7 +107,7 @@ function page() {
     setFormData(prev => ({
       ...prev,
       [field]: [...prev[field],
-      field === 'services' ? { name: '', description: '' } :
+        field === 'services' ? { name: '', description: '' } :
         field === 'faqs' ? { question: '', answer: '' } : {}
       ]
     }));
@@ -176,7 +187,7 @@ function page() {
           className={`mb-2 ${errors['email'] ? 'border-red-500' : ''}`}
           placeholder="Email*"
         />
-        {errors['email'] && <p className="text-red-500 text-sm mt-1">{errors['contactInfo.email']}</p>}
+        {errors['email'] && <p className="text-red-500 text-sm mt-1">{errors['email']}</p>}
         <Input
           type="tel"
           value={formData.phone}
@@ -317,47 +328,43 @@ function page() {
     }
   };
 
-  // if (true) {
-  //   console.log("testing id", createdChatBotData.id);
-  //   return (
-  //     <div className="max-w-2xl mx-auto p-4">
-  //       <Card>
-  //         <CardHeader>
-  //           <CardTitle>Test Your Chatbot: {formData.botName}</CardTitle>
-  //         </CardHeader>
-  //         <CardContent>
-  //           <p className="mb-4 text-gray-600">Your chatbot has been created successfully! You can test it below.</p>
-  //           {/* <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id} /> */}
-  //         </CardContent>
-  //         <CardFooter className="flex justify-between">
-  //           <button
-  //             type="button"
-  //             onClick={() => setShowPreview(false)}
-  //             className="px-4 py-2 text-gray-600 hover:text-gray-900"
-  //           >
-  //             Back to Editor
-  //           </button>
-  //           <button
-  //             type="button"
-  //             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-  //             onClick={() => {
-  //               // Navigate to dashboard or chatbots page
-  //               if (onCreate) onCreate();
-  //             }}
-  //           >
-  //             Go to Dashboard
-  //           </button>
-  //         </CardFooter>
-  //       </Card>
-  //     </div>
-  //   );
-  // }
+  if (showPreview && createdChatBotData) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Test Your Chatbot: {formData.botName}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-gray-600">Your chatbot has been updated successfully! You can test it below.</p>
+            <ChatbotPreview botId={createdChatBotData.id} />
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <button
+              type="button"
+              onClick={() => setShowPreview(false)}
+              className="px-4 py-2 text-gray-600 hover:text-gray-900"
+            >
+              Back to Editor
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              onClick={() => router.push('/dashboard/chatbots')}
+            >
+              Go to Dashboard
+            </button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Create AI Chatbot</CardTitle>
+          <CardTitle>Edit AI Chatbot</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -372,13 +379,12 @@ function page() {
                     }`}>
                     {num}
                   </div>
-                  {/* {num < 4 && <div className={`w-full h-1 mx-2 ${num < step ? 'bg-blue-600' : 'bg-gray-300'}`} />} */}
                 </div>
               ))}
             </div>
           </div>
 
-          {formData && renderCurrentStep()}
+          {renderCurrentStep()}
         </CardContent>
 
         <CardFooter className="flex justify-between">
@@ -414,4 +420,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;

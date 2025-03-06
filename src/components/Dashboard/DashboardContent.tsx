@@ -197,7 +197,7 @@ const DashboardContent = ({setActivePage, userDetails, chatbotData}) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {chatbotData && chatbotData.length > 0 && chatbotData.map((bot) => (
+                {chatbotData && chatbotData.length > 0 && chatbotData.map((bot, index) => (
                   <>
                 { filterStatus == 'all' && <tr key={bot.id}>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -28,7 +28,7 @@ export default function ChatArea() {
                 {!isNewChat ? (
                     // Regular chat view
                     messages.map((message, index) => (
-                     <div
+                    index != 1 && <div
                             key={index}
                             className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
                         >
@@ -48,10 +48,10 @@ export default function ChatArea() {
                     // Welcome screen for new chat
                     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-white p-6">
                         <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 text-center">
-                            {integration?.initialMessage || "Welcome to Shootorder Assistant"}
+                            {integration?.initialMessage}
                         </h1>
                         <p className="mt-3 text-lg text-gray-300">
-                            {integration?.subText || "Ask me anything about our services"}
+                            {integration?.subText}
                         </p>
                         {/* {messages[0] && (
                             <div className="mt-4 bg-gray-800 rounded-lg p-3 text-white">

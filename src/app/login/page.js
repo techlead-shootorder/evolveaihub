@@ -168,7 +168,7 @@ export default function AuthPage() {
                     </button>
 
                     <p className="text-center mt-8 text-sm text-gray-600">
-                        Don't have an account?
+                        Don&apos;t have an account?
                         <button
                             onClick={() => router.push("/register")}
                             className="text-indigo-600 font-semibold hover:text-indigo-500"

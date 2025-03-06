@@ -22,6 +22,7 @@ import KeyBenefits from "@/components/home/KeyBenefits";
 import About from "@/components/home/About";
 import Overview from "@/components/home/Overview";
 import Footer from "@/components/home/Footer";
+import Image from "next/image";
 
 // const Header = () => (
 //   <header className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b">
@@ -69,8 +70,10 @@ const HeroBanner = () => (
           <div className="mt-8 flex items-center space-x-4">
             <div className="flex -space-x-2">
               {[...Array(4)].map((_, i) => (
-                <img
+                <Image
                   key={i}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-full border-2 border-white"
                   src={`/api/placeholder/40/40`}
                   alt="User avatar"
@@ -85,7 +88,9 @@ const HeroBanner = () => (
         </div>
         <div className="relative">
           <div className="bg-white rounded-lg shadow-xl p-6">
-            <img
+            <Image
+              width={600}
+              height={400}
               src="/api/placeholder/600/400"
               alt="AI Platform Dashboard"
               className="rounded-lg"
@@ -231,7 +236,9 @@ const Dashboard = () => (
             </div>
           </div>
         </div>
-        <img
+        <Image
+         width={1200}
+         height={600}
           src="/api/placeholder/1200/600"
           alt="Dashboard Preview"
           className="w-full"

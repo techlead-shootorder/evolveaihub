@@ -69,7 +69,7 @@ export const IntegrationInstructions: React.FC<IntegrationInstructionsProps> = (
         <CardContent>
           <Alert className="mb-4 bg-blue-50 border-blue-200">
             <AlertDescription className="text-blue-800">
-              Add this code to your website's HTML just before the closing &lt;/body&gt; tag
+              Add this code to your website&apos;s HTML just before the closing &lt;/body&gt; tag
             </AlertDescription>
           </Alert>
 

@@ -94,7 +94,7 @@ const DashboardLayout = () => {
             setUserDetails(data.user);
             setIsAuthenticated(true);
           } catch (error) {
-            console.error("Error fetching user:", error.message);
+            console.error("Error fetching user:", error);
           }
         }
       }
@@ -160,8 +160,8 @@ const DashboardLayout = () => {
   const renderComponent = () => {
     if (!isAuthenticated) return null;
 
-    if (chatbotCreated) {
-      return <ChatbotPreview userDetails={userDetails} botId={createdChatBotData.id} />;
+    if (chatbotCreated ) {
+      return <ChatbotPreview userDetails={userDetails} botId={createdChatBotData?.id} />;
     }
 
     const components = {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import Image from 'next/image';
 
 function IntegrationSettings({ userDetails, chatbotData }) {
   const [selectedBot, setSelectedBot] = useState(null);
@@ -10,6 +11,8 @@ function IntegrationSettings({ userDetails, chatbotData }) {
     logo: null,
     primaryColor: '',
     secondaryColor: '',
+    poistion: '',
+    botName: '',
     chatbotId: '',
     domain: '',
     pills: [], // Initialize as an array
@@ -52,7 +55,7 @@ function IntegrationSettings({ userDetails, chatbotData }) {
       setCustomization(prev => ({
         ...prev,
         primaryColor: selectedBot.primaryColor || prev.primaryColor,
-        position: selectedBot.position || prev.position,
+        position: selectedBot.position || prev?.position,
         initialMessage: selectedBot.initialMessage || prev.initialMessage,
         botName: selectedBot.botName || prev.botName
       }));
@@ -325,7 +328,7 @@ function App() {
         ? '/api/customize/update' 
         : '/api/customize/create';
       
-      const method = 'PATCH';
+      const method = integrationData ? 'PATCH' : 'POST';
 
       const response = await fetch(endpoint, {
         method,
@@ -478,7 +481,7 @@ function App() {
                   </div>
                 ) : (
                   <div className="flex items-center space-x-4">
-                    <img src={logoPreview} alt="Logo" className="w-16 h-16 object-cover rounded-md border" />
+                    <Image src={logoPreview} alt="Logo" width={64} height={64} className="w-16 h-16 object-cover rounded-md border" />
                     <button
                       onClick={handleRemove}
                       className="p-2 bg-red-500 text-white rounded-md"

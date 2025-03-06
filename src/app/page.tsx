@@ -237,8 +237,8 @@ const Dashboard = () => (
           </div>
         </div>
         <Image
-         width={1200}
-         height={600}
+          width={1200}
+          height={600}
           src="/api/placeholder/1200/600"
           alt="Dashboard Preview"
           className="w-full"
@@ -264,18 +264,18 @@ const CallToAction = () => (
 const Home = () => {
   return (
     <div className="min-h-screen">
-       <Header />
+      <Header />
       <main>
         <Hero />
         <Features />
         <HowItWorks />
         <KeyBenefits />
         <About />
-        <Overview/>
+        <Overview />
         {/* <Dashboard />
         <CallToAction /> */}
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 };

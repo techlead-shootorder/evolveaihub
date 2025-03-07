@@ -13,11 +13,32 @@ interface MyChatbotsProps {
 function MyChatbots({ userDetails, onPreview, chatbotData, setActivePage }: MyChatbotsProps) {
    
   const router = useRouter();
+
+  async function deleteChatBot(botId: number) {
+    try {
+      const response = await fetch(`/api/deleteBot?chatbotId=${botId}`)
+      const data = await response.json();
+      
+      if (data) {
+         alert('chat bot deleted')
+         window.location.reload();
+      }
+      else {       
+        alert("failed to delete chatbot", data);
+      }
+    }
+    catch (error) {
+      console.log("error getting integration", error);
+    }
+  }
+  
    
   const handleDelete = (botId: number) => {
     if (window.confirm('Are you sure you want to delete this chatbot?')) {
       console.log('Deleting bot:', botId);
+      
       // Add API call to delete chatbot
+      deleteChatBot(botId);
     }
   };
 

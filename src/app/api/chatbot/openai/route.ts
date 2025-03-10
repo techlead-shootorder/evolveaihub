@@ -98,40 +98,73 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Chatbot not found" }, { status: 404 });
     }
 
-    let lead = leadId ? await prisma.lead.findUnique({ where: { id: leadId } }) : null;
     const latestMessage = messages[messages.length - 1]?.content || "";
     const newLeadInfo = extractLeadInfo(latestMessage);
-
-    if (lead) {
-      console.log("Updating existing lead:", lead);
-      lead = await prisma.lead.update({
-        where: { id: leadId },
-        data: {
-          name: newLeadInfo.name || lead.name,
-          email: newLeadInfo.email || lead.email,
-          phone: newLeadInfo.phone || lead.phone,
-          messages: { push: messages[messages.length - 1] }, // Correct Prisma update format
-          chatbotId: id,
-        },
-      });
-    } else {
-      console.log("Creating new lead");
-      lead = await prisma.lead.create({
-        data: {
-          name: newLeadInfo.name || null,
-          email: newLeadInfo.email || null,
-          phone: newLeadInfo.phone || null,
-          messages: [messages[messages.length - 1]],
-          chatbotId: id,
-        },
-      });
-    }
-
-    const currentLeadInfo: LeadInfo = {
-      name: lead.name,
-      email: lead.email,
-      phone: lead.phone,
+    
+    // Track current lead information
+    let currentLeadInfo: LeadInfo = {
+      name: null,
+      email: null,
+      phone: null
     };
+    
+    let lead = null;
+    
+    // If we have a leadId, update the existing lead with any new information
+    if (leadId) {
+      lead = await prisma.lead.findUnique({ where: { id: leadId } });
+      
+      if (lead) {
+        console.log("Updating existing lead:", lead);
+        
+        // Merge existing lead info with new info
+        const updatedData: Partial<LeadInfo> = {};
+        if (newLeadInfo.name && !lead.name) updatedData.name = newLeadInfo.name;
+        if (newLeadInfo.email && !lead.email) updatedData.email = newLeadInfo.email;
+        if (newLeadInfo.phone && !lead.phone) updatedData.phone = newLeadInfo.phone;
+        
+        // Update messages array
+        lead = await prisma.lead.update({
+          where: { id: leadId },
+          data: {
+            ...updatedData,
+            messages: { push: messages[messages.length - 1] }
+          },
+        });
+        
+        // Update current lead info with the updated lead
+        currentLeadInfo = {
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone
+        };
+      }
+    }
+    
+    // If we don't have a lead yet (no leadId or lead not found)
+    if (!lead) {
+      // Create a temporary object to track information across messages
+      // This will be used for the chatbot prompt but not saved to the database yet
+      currentLeadInfo = {
+        name: newLeadInfo.name || null,
+        email: newLeadInfo.email || null,
+        phone: newLeadInfo.phone || null
+      };
+      
+      // Only create a new lead in the database if we have at least one piece of information
+      if (newLeadInfo.name || newLeadInfo.email || newLeadInfo.phone) {
+        console.log("Creating new lead with partial information");
+        lead = await prisma.lead.create({
+          data: {
+            name: newLeadInfo.name || null,
+            email: newLeadInfo.email || null,
+            phone: newLeadInfo.phone || null,
+            messages: [messages[messages.length - 1]],
+            chatbotId: id,
+          },
+        });
+      }
+    }
 
     const systemMessage = createLeadCaptureSystemMessage(chatbotConfig, currentLeadInfo);
 
@@ -160,7 +193,7 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
-    return NextResponse.json({ ...data, leadId: lead.id });
+    return NextResponse.json({ ...data, leadId: lead?.id });
 
   } catch (error) {
     console.error("[OpenAI API] Unexpected error:", error);

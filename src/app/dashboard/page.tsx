@@ -170,7 +170,7 @@ const DashboardLayout = () => {
       create: <CreateChatbotForm onCreate={() => setChatbotCreated(true)} userDetails={userDetails} showPreview={showPreview} setShowPreview={setShowPreview} createdChatBotData={createdChatBotData} setCreatedChatBotData={setCreatedChatBotData} />,
       analytics: <ChatbotAnalytics />,
       integration: <IntegrationSettings userDetails={userDetails} chatbotData={chatbotData} />,
-      leads: <Leads />,
+      leads: <Leads userDetails={userDetails} chatbotData={chatbotData}/>,
       profile: <ProfileSettings userDetails={userDetails} />,
       subscription: <SubscriptionManagement />,
       support: <Support />,

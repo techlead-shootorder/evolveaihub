@@ -45,7 +45,7 @@ function Header() {
           href="/"
           className="text-2xl font-bold text-gray-800 flex items-center"
         >
-          <Image src='/images/logo/chatlx_logo.webp' className="object-cover h-[80px] w-[300px]" alt="logo" width={150} height={80}/>
+          <Image src='/images/logo/chatlx-logo-2.png' className="object-cover h-[60px] w-[180px]" alt="logo" width={150} height={80}/>
         </Link>
 
         {/* Navigation Links */}

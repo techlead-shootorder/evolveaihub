@@ -9,15 +9,16 @@ export default function Footer() {
       <div className="container mx-auto flex flex-col md:flex-row items-center justify-between px-4">
         {/* Logo Section */}
         <div className="flex items-center">
-          <Image
-            src="/images/logo.png"
-            alt="Logo"
-            width={20}
-            height={20}
-            priority
-          />
+          <Link href={"/"}>
+            <Image
+              src="/images/Brand-mark.png"
+              alt="Logo"
+              width={20}
+              height={20}
+              priority
+            />
+          </Link>
         </div>
-
         {/* Links Section */}
         <div className="flex space-x-6 mt-4 md:mt-0">
           <Link href="/privacy-policy" className="hover:underline">

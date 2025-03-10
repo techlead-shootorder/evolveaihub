@@ -7,6 +7,14 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 
+
+type UserData = {
+  id?: string;
+  name?: string;
+  email?: string;
+  [key: string]: any; // In case there are additional properties
+};
+
 function Header() {
   const [openMenu, setOpenMenu] = useState(null);
   const router = useRouter();
@@ -18,30 +26,26 @@ function Header() {
       const checkAuth = async () => {
         if (status === "loading") return;
         const userData = JSON.parse(localStorage.getItem("userData") ?? "{}") as UserData;
-  
         // if not a logged in user
         if (!userData?.id && !session) {
           setIsLoggedIn(false);
-        
-
         } else{
           setIsLoggedIn(true);
         }
-
       };
       checkAuth();
     }, [session, status, router]);
 
 
   return (
-    <header className="bg-white shadow-md">
+    <header className="bg-[#F2F3FB] shadow-md">
       <div className="container mx-auto flex justify-between items-center py-4 px-4 relative">
         {/* Logo */}
         <Link
           href="/"
           className="text-2xl font-bold text-gray-800 flex items-center"
         >
-          <Image src='/images/logo/chatlx_logo.webp' className="object-cover h-[60px] w-[150px]" alt="logo" width={150} height={80}/>
+          <Image src='/images/logo/chatlx_logo.webp' className="object-cover h-[80px] w-[300px]" alt="logo" width={150} height={80}/>
         </Link>
 
         {/* Navigation Links */}
@@ -63,7 +67,7 @@ function Header() {
         </button>
 
          ) : (<button
-            className="bg-primary text-white px-4 py-2 rounded-full font-medium hover:bg-blue-600 transition"
+            className="bg-primary text-white px-5 py-2 rounded-full font-medium hover:bg-blue-600 transition"
             onClick={() => router.push("/login")}
           >
             Sign In

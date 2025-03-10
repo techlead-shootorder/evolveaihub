@@ -23,7 +23,7 @@ export default function Overview() {
 
       {/* Logo (Optional) */}
       <div className="mb-4">
-        <Image src="/images/logo.png" alt="Logo" width={40} height={40} />
+        <Image src="/images/Brand-mark.png" alt="Logo" width={40} height={40} />
       </div>
 
       {/* Title & Description */}

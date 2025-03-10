@@ -69,6 +69,66 @@ function extractLeadInfo(message: string): Partial<LeadInfo> {
   return info;
 }
 
+// Function to get temp lead data for a chatbot
+function getTempLeadData(chatbotId: string): LeadInfo {
+  // Since localStorage is browser-only, we'll use a server-side equivalent
+  // Node.js doesn't have localStorage, so we simulate it using global variables
+  const globalAny = global as any;
+  if (!globalAny.tempLeadStorage) {
+    globalAny.tempLeadStorage = {};
+  }
+  
+  if (!globalAny.tempLeadStorage[chatbotId]) {
+    globalAny.tempLeadStorage[chatbotId] = {
+      name: null,
+      email: null,
+      phone: null
+    };
+  }
+  
+  return globalAny.tempLeadStorage[chatbotId];
+}
+
+// Function to update temp lead data
+function updateTempLeadData(chatbotId: string, data: Partial<LeadInfo>): LeadInfo {
+  const globalAny = global as any;
+  if (!globalAny.tempLeadStorage) {
+    globalAny.tempLeadStorage = {};
+  }
+  
+  if (!globalAny.tempLeadStorage[chatbotId]) {
+    globalAny.tempLeadStorage[chatbotId] = {
+      name: null,
+      email: null,
+      phone: null
+    };
+  }
+  
+  if (data.name) globalAny.tempLeadStorage[chatbotId].name = data.name;
+  if (data.email) globalAny.tempLeadStorage[chatbotId].email = data.email;
+  if (data.phone) globalAny.tempLeadStorage[chatbotId].phone = data.phone;
+  
+  return globalAny.tempLeadStorage[chatbotId];
+}
+
+// Function to clear temp lead data after successful lead creation
+function clearTempLeadData(chatbotId: string): void {
+  const globalAny = global as any;
+  if (globalAny.tempLeadStorage && globalAny.tempLeadStorage[chatbotId]) {
+    globalAny.tempLeadStorage[chatbotId] = {
+      name: null,
+      email: null,
+      phone: null
+    };
+    console.log(`Cleared temporary lead data for chatbot ID: ${chatbotId}`);
+  }
+}
+
+// Function to check if all required fields are present
+function hasAllRequiredFields(data: LeadInfo): boolean {
+  return !!data.name && !!data.email && !!data.phone;
+}
+
 export async function POST(req: Request) {
   try {
     console.log("[OpenAI API] Received request");
@@ -101,14 +161,8 @@ export async function POST(req: Request) {
     const latestMessage = messages[messages.length - 1]?.content || "";
     const newLeadInfo = extractLeadInfo(latestMessage);
     
-    // Track current lead information
-    let currentLeadInfo: LeadInfo = {
-      name: null,
-      email: null,
-      phone: null
-    };
-    
     let lead = null;
+    let currentLeadInfo: LeadInfo;
     
     // If we have a leadId, update the existing lead with any new information
     if (leadId) {
@@ -123,7 +177,7 @@ export async function POST(req: Request) {
         if (newLeadInfo.email && !lead.email) updatedData.email = newLeadInfo.email;
         if (newLeadInfo.phone && !lead.phone) updatedData.phone = newLeadInfo.phone;
         
-        // Update messages array
+        // Only update message array
         lead = await prisma.lead.update({
           where: { id: leadId },
           data: {
@@ -132,37 +186,46 @@ export async function POST(req: Request) {
           },
         });
         
-        // Update current lead info with the updated lead
+        // Use the updated lead info for the prompt
         currentLeadInfo = {
           name: lead.name,
           email: lead.email,
           phone: lead.phone
         };
       }
-    }
-    
-    // If we don't have a lead yet (no leadId or lead not found)
-    if (!lead) {
-      // Create a temporary object to track information across messages
-      // This will be used for the chatbot prompt but not saved to the database yet
-      currentLeadInfo = {
-        name: newLeadInfo.name || null,
-        email: newLeadInfo.email || null,
-        phone: newLeadInfo.phone || null
-      };
+    } else {
+      // If no leadId, get the temporary data from storage
+      currentLeadInfo = getTempLeadData(id);
       
-      // Only create a new lead in the database if we have at least one piece of information
-      if (newLeadInfo.name || newLeadInfo.email || newLeadInfo.phone) {
-        console.log("Creating new lead with partial information");
+      // Update with any new information extracted from this message
+      if (newLeadInfo.name) currentLeadInfo.name = newLeadInfo.name;
+      if (newLeadInfo.email) currentLeadInfo.email = newLeadInfo.email;
+      if (newLeadInfo.phone) currentLeadInfo.phone = newLeadInfo.phone;
+      
+      // Store updated info back to storage
+      updateTempLeadData(id, currentLeadInfo);
+      
+      // Check if we now have all required fields
+      if (hasAllRequiredFields(currentLeadInfo)) {
+        console.log("All required fields present, creating new lead");
+        
+        // Create a new lead only when all information is available
         lead = await prisma.lead.create({
           data: {
-            name: newLeadInfo.name || null,
-            email: newLeadInfo.email || null,
-            phone: newLeadInfo.phone || null,
-            messages: [messages[messages.length - 1]],
+            name: currentLeadInfo.name,
+            email: currentLeadInfo.email,
+            phone: currentLeadInfo.phone,
+            messages: messages, // Store all messages
             chatbotId: id,
           },
         });
+        
+        // Clear the temporary lead data after successful lead creation
+        clearTempLeadData(id);
+        console.log("Lead created and temporary data cleared");
+      } else {
+        console.log("Missing required fields, not creating lead yet");
+        console.log("Current temp data:", currentLeadInfo);
       }
     }
 

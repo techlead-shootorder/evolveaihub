@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="flex items-center">
           <Link href={"/"}>
             <Image
-              src="/images/Brand-mark.png"
+              src="/images/Brand-mark-2.png"
               alt="Logo"
               width={20}
               height={20}
